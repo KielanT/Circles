@@ -5,10 +5,10 @@
 
 struct Circle
 {
-	CVector3 Position;
-	float Radius;
-	CVector3 Velocity;
-	std::string Name;
-	int HP = 100;
-	CVector3 Colour;
+    CVector3 Position;
+    CVector3 Velocity;
+    CVector3 Colour;
+    float Radius;
+    int HP = 100;
+    std::string Name;
 };

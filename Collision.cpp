@@ -1,9 +1,9 @@
 #include "Collision.h"
 
-void Collision::SpheresToSpheres(Circle* MovingCircles, Circle* BlockCircles, uint32_t numCircles, float time)
+void Collision::SpheresToSpheres(Circle* MovingCircles, Circle* BlockCircles, uint32_t numMovingCircles, uint32_t numBlockCircles, float time)
 {
-	auto MovingCirclesEnd = MovingCircles + (numCircles / 2);
-	auto BlockCirclesEnd = BlockCircles + (numCircles / 2);
+	auto MovingCirclesEnd = MovingCircles + numMovingCircles;
+	auto BlockCirclesEnd = BlockCircles + numBlockCircles;
 	
 	while (MovingCircles != MovingCirclesEnd)
 	{
@@ -25,15 +25,15 @@ void Collision::SpheresToSpheres(Circle* MovingCircles, Circle* BlockCircles, ui
 
 		// Unsure to why the commented outcode does not work
 
-		SphereToSpheres(*MovingCircles, BlockCircles, numCircles, time);
+		SphereToSpheres(*MovingCircles, BlockCircles, numBlockCircles, time);
 
 		++MovingCircles;
 	}
 }
 
-void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint32_t numCircles, float time)
+void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint32_t numBlockCircles, float time)
 {
-	auto BlockCirclesEnd = BlockCircles + (numCircles / 2);
+	auto BlockCirclesEnd = BlockCircles + numBlockCircles;
 	while (BlockCircles != BlockCirclesEnd)
 	{
 		const float distance = sqrt((movingCirlce.Position.x - BlockCircles->Position.x) * (movingCirlce.Position.x - BlockCircles->Position.x) +
