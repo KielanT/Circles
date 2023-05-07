@@ -108,6 +108,14 @@ CVector3 Normalise(const CVector3& v)
     }
 }
 
+CVector3 Reflect(const CVector3& toReflect, const CVector3& normal)
+{
+    CVector3 outVector;
+    outVector = toReflect - (2 * Dot(toReflect, normal)) * normal;
+
+    return outVector;
+}
+
 
 // Returns length of a vector
 float Length(const CVector3& v)

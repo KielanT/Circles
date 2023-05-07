@@ -42,7 +42,9 @@ void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint
 
 		if (distance < movingCirlce.Radius + BlockCircles->Radius)
 		{
-			movingCirlce.Velocity = -movingCirlce.Velocity;
+			CVector3 normal = BlockCircles->Position - movingCirlce.Position;
+			movingCirlce.Velocity = Reflect(movingCirlce.Velocity, Normalise(normal));
+			
 			std::cout << "Collision Between: " << movingCirlce.Name << " and " << BlockCircles->Name << std::endl;
 		}
 

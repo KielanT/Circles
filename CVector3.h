@@ -90,6 +90,8 @@ CVector3 Cross(const CVector3& v1, const CVector3& v2);
 // Return unit length vector in the same direction as given one
 CVector3 Normalise(const CVector3& v);
 
+CVector3 Reflect(const CVector3& toReflect, const CVector3& normal);
+
 // Returns length of a vector
 float Length(const CVector3& v);
 
