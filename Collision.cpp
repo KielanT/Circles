@@ -1,4 +1,7 @@
 #include "Collision.h"
+#include <mutex>
+
+
 
 void Collision::SpheresToSpheres(Circle* MovingCircles, Circle* BlockCircles, uint32_t numMovingCircles, uint32_t numBlockCircles, float time)
 {
@@ -33,6 +36,8 @@ void Collision::SpheresToSpheres(Circle* MovingCircles, Circle* BlockCircles, ui
 
 void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint32_t numBlockCircles, float time)
 {
+	static std::mutex cout_mutex;
+
 	auto BlockCirclesEnd = BlockCircles + numBlockCircles;
 	while (BlockCircles != BlockCirclesEnd)
 	{
@@ -48,12 +53,16 @@ void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint
 			movingCirlce.HP -= 20;
 			BlockCircles->HP -= 20;
 
-			std::cout << std::endl;
-			std::cout << "Collision Between: " << movingCirlce.Name << " and " << BlockCircles->Name << std::endl;
-			std::cout << "Time of collision: " << time << " seconds since start of program" << std::endl;
-			std::cout << movingCirlce.Name << " HP:" <<  std::to_string(movingCirlce.HP) << std::endl;
-			std::cout << BlockCircles->Name << " HP:" << std::to_string(BlockCircles->HP) << std::endl;
-			std::cout << std::endl;
+			// Stops the couts from getting jumbled with the other threads
+			std::lock_guard<std::mutex> lock(cout_mutex);
+			{
+				std::cout << std::endl;
+				std::cout << "Collision Between: " << movingCirlce.Name << " and " << BlockCircles->Name << std::endl;
+				std::cout << "Time of collision: " << time << " seconds since start of program" << std::endl;
+				std::cout << movingCirlce.Name << " HP:" << std::to_string(movingCirlce.HP) << std::endl;
+				std::cout << BlockCircles->Name << " HP:" << std::to_string(BlockCircles->HP) << std::endl;
+				std::cout << std::endl;
+			}
 		}
 
 		++BlockCircles;

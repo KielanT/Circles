@@ -16,7 +16,7 @@ using namespace tle;
 #include "ThreadHelper.h"
 
 
-const int NUM_CIRCLES = 500;
+const int NUM_CIRCLES = 2000;
 const float RANGE_POSITION = 1000.0f;
 const float RANGE_VELOCITY = 5.0f;
 const float RADIUS = 10.0f;
@@ -45,6 +45,8 @@ void ControlCamera(I3DEngine* engine, ICamera* camera);
 
 void main()
 {
+	std::mutex cout_mutex;
+
 	Init();
 
 	gTimer.Reset();
@@ -99,18 +101,22 @@ void main()
 	{
 		gTimer.Tick();
 		// Draw the scene
+		
 		myEngine->DrawScene();
 
 
 		/**** Update your scene each frame here ****/
 		Move(MovingCircles.data(), MovingCircles.size());
+
+
 		RunCollisionThreads();
 
 
-		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
-
-
+	
 		ControlCamera(myEngine, Camera);
+
+
+		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
 	}
 
 	// Delete the 3D engine now we are finished with it
@@ -121,6 +127,7 @@ void main()
 	{
 		gCollisionWorkers[i].first.Thread.detach();
 	}
+
 
 }
 
@@ -140,6 +147,7 @@ void Init()
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<float> randLoc(-RANGE_POSITION, RANGE_POSITION);
 	std::uniform_real_distribution<float> randVel(-RANGE_VELOCITY, RANGE_VELOCITY);
+
 
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
@@ -208,8 +216,8 @@ void CollisionThread(uint32_t thread)
 		{
 			std::unique_lock<std::mutex> l(worker.Lock);
 			work.Complete = true;
+			worker.WorkReady.notify_one();
 		}
-		worker.WorkReady.notify_one();
 	}
 }
 

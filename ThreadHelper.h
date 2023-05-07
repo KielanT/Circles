@@ -21,3 +21,10 @@ struct CollisionWork
 	float Time;
 };
 
+struct MoveWork
+{
+	bool Complete = true;
+	Circle* MovingCircles;
+	float Speed;
+	float DeltaTime;
+};
