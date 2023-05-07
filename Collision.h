@@ -5,7 +5,7 @@
 
 namespace Collision
 {
-	void SpheresToSpheres(Circle* MovingCircles, Circle* BlockCircles, uint32_t numCircles);
+	void SpheresToSpheres(Circle* MovingCircles, Circle* BlockCircles, uint32_t numCircles, float time);
 
-	void SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint32_t numCircles);
+	void SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint32_t numCircles, float time);
 }

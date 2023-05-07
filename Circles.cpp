@@ -1,6 +1,6 @@
 // Define used for switching between console and visualisation 
-//#define Console
-#define Visual
+#define Console
+//#define Visual
 
 
 #include <TL-Engine.h>	
@@ -16,7 +16,7 @@ using namespace tle;
 
 
 
-const int NUM_CIRCLES = 100;
+const int NUM_CIRCLES = 500;
 const float RANGE_POSITION = 1000.0f;
 const float RANGE_VELOCITY = 5.0f;
 const float RADIUS = 10.0f;
@@ -35,7 +35,6 @@ Timer gTimer;
 
 void Init();
 void Move(Circle* circles, uint32_t numCirlces);
-void Colision(Circle* circles, uint32_t numCirlces);
 void ControlCamera(I3DEngine* engine, ICamera* camera);
 
 void main()
@@ -49,9 +48,11 @@ void main()
 	while (true)
 	{
 		gTimer.Tick();
+		
+
 
 		Move(MovingCircles.data(), MovingCircles.size());
-		Colision(MovingCircles.data(), MovingCircles.size());
+		Collision::SpheresToSpheres(MovingCircles.data(), BlockCircles.data(), NUM_CIRCLES, gTimer.GetTime());
 
 		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
 	}
@@ -101,11 +102,11 @@ void main()
 
 		/**** Update your scene each frame here ****/
 		Move(MovingCircles.data(), MovingCircles.size());
-		//Colision(MovingCircles.data(), MovingCircles.size());
-		Collision::SpheresToSpheres(MovingCircles.data(), BlockCircles.data(), NUM_CIRCLES);
+		Collision::SpheresToSpheres(MovingCircles.data(), BlockCircles.data(), NUM_CIRCLES, gTimer.GetTime());
 
 
 		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
+
 
 		ControlCamera(myEngine, Camera);
 	}
@@ -173,24 +174,10 @@ void Move(Circle* circles, uint32_t numCirlces)
 	
 #endif 
 
-
 		++circles;
 	}
 }
 
-void Colision(Circle* circles, uint32_t numCirlces)
-{
-	auto circlesEnd = circles + numCirlces;
-
-	while (circles != circlesEnd)
-	{
-		Collision::SphereToSpheres(*circles, BlockCircles.data(), NUM_CIRCLES);
-
-
-		++circles;
-	}
-
-}
 
 
 void ControlCamera(I3DEngine* engine, ICamera* camera)

@@ -9,6 +9,6 @@ struct Circle
 	float Radius;
 	CVector3 Velocity;
 	std::string Name;
-	int HP;
+	int HP = 100;
 	CVector3 Colour;
 };
