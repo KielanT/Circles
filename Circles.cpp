@@ -1,6 +1,6 @@
 // Define used for switching between console and visualisation 
-#define Console
-//#define Visual
+//#define Console
+#define Visual
 
 
 #include <TL-Engine.h>	
@@ -57,7 +57,7 @@ void ControlCamera(I3DEngine* engine, ICamera* camera);
 
 void main()
 {
-	std::mutex coutMutex;
+	static std::mutex coutMutex;
 
 	Init();
 
@@ -68,13 +68,17 @@ void main()
 	while (true)
 	{
 		gTimer.Tick();
+		
 
 		Move(*MovingCircles.data(), MovingCircles.size());
+		RunMoveThread();
+
 
 		RunCollisionThreads();
 
-		std::lock_guard<std::mutex> lock(coutMutex);
+		std::unique_lock<std::mutex> l(coutMutex);
 		{
+			// This never gets printed so it is called on collision (not ideal)
 			std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
 		}
 	}
@@ -152,13 +156,14 @@ void Init()
 {
 	NumWorkers = std::thread::hardware_concurrency(); // Gets the amount of threads the system has (is only a hint may not work)
 	if (NumWorkers == 0) NumWorkers = 8; // If there wasn't any hinds force threads count to be 8
-	--NumWorkers; // Removes 1 worker since the main thread is already running
+	NumWorkers -= 2; // Removes 1 worker since the main thread is already running
 
 	// Start the collision threads
 	for (uint32_t i = 0; i < NumWorkers; ++i)
 	{
 		gCollisionWorkers[i].first.Thread = std::thread(&CollisionThread, i);
 	}
+
 
 	std::random_device rd;
 	std::mt19937 mt(rd());
@@ -228,6 +233,8 @@ void Move(Circle* circles, uint32_t numCirlces)
 	}
 }
 
+
+
 void CollisionThread(uint32_t thread)
 {
 	auto& worker = gCollisionWorkers[thread].first;
@@ -239,7 +246,7 @@ void CollisionThread(uint32_t thread)
 			worker.WorkReady.wait(l, [&]() { return !work.Complete; });
 		}
 
-		Collision::SpheresToSpheres(work.MovingCircles, work.BlockingCircles, work.NumMovingCircles, work.NumBlockCircles, work.Time);
+		Collision::SpheresToSpheres(work.MovingCircles, work.BlockingCircles, work.NumMovingCircles, work.NumBlockCircles, work.Time, gTimer.GetDeltaTime());
 
 		{
 			std::unique_lock<std::mutex> l(worker.Lock);
@@ -274,7 +281,8 @@ void RunCollisionThreads()
 
 	// Do collision for the remaining circles
 	uint32_t numRemainingCircles = (NUM_CIRCLES / 2) - static_cast<uint32_t>(movingCircles - MovingCircles.data());
-	Collision::SpheresToSpheres(*movingCircles, *BlockCircles.data(), numRemainingCircles, NUM_CIRCLES / 2, gTimer.GetTime());
+	Collision::SpheresToSpheres(*movingCircles, *BlockCircles.data(), numRemainingCircles, NUM_CIRCLES / 2, gTimer.GetTime(), gTimer.GetDeltaTime());
+
 
 	for (uint32_t i = 0; i < NumWorkers; ++i)
 	{

@@ -3,7 +3,7 @@
 
 
 
-void Collision::SpheresToSpheres(Circle* MovingCircles, Circle* BlockCircles, uint32_t numMovingCircles, uint32_t numBlockCircles, float time)
+void Collision::SpheresToSpheres(Circle* MovingCircles, Circle* BlockCircles, uint32_t numMovingCircles, uint32_t numBlockCircles, float time, float deltaTime)
 {
 	auto MovingCirclesEnd = MovingCircles + numMovingCircles;
 	auto BlockCirclesEnd = BlockCircles + numBlockCircles;
@@ -28,13 +28,13 @@ void Collision::SpheresToSpheres(Circle* MovingCircles, Circle* BlockCircles, ui
 
 		// Unsure to why the commented outcode does not work
 
-		SphereToSpheres(*MovingCircles, BlockCircles, numBlockCircles, time);
+		SphereToSpheres(*MovingCircles, BlockCircles, numBlockCircles, time, deltaTime);
 
 		++MovingCircles;
 	}
 }
 
-void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint32_t numBlockCircles, float time)
+void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint32_t numBlockCircles, float time, float deltaTime)
 {
 	static std::mutex coutMutex;
 
@@ -54,7 +54,7 @@ void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint
 			BlockCircles->HP -= 20;
 
 			// Stops the couts from getting jumbled with the other threads
-			std::lock_guard<std::mutex> lock(coutMutex);
+			std::unique_lock<std::mutex> lock(coutMutex);
 			{
 				std::cout << std::endl;
 				std::cout << "Collision Between: " << movingCirlce.Name << " and " << BlockCircles->Name << std::endl;
@@ -62,6 +62,7 @@ void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint
 				std::cout << movingCirlce.Name << " HP:" << std::to_string(movingCirlce.HP) << std::endl;
 				std::cout << BlockCircles->Name << " HP:" << std::to_string(BlockCircles->HP) << std::endl;
 				std::cout << std::endl;
+				std::cout << "Delta Time: " << deltaTime << std::endl;
 			}
 		}
 
