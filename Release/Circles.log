@@ -1,3 +1,8 @@
 ﻿  Circles.cpp
-LINK : fatal error C1047: The object or library file 'D:\Software\Misc\TL-Engine\lib\TL-Engine2019.lib' was created by a different version of the compiler than other objects like 'Release\Circles.obj'; rebuild all objects and libraries with the same compiler
-LINK : fatal error LNK1257: code generation failed
+  Generating code
+  1 of 501 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    2 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  Circles.vcxproj -> E:\Uni\Masters\CO4302\Assignment\Circles\Circles.exe
+  Copying DLLs & shaders...

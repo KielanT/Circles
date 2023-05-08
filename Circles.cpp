@@ -1,6 +1,6 @@
 // Define used for switching between console and visualisation 
-//#define Console
-#define Visual
+#define Console
+//#define Visual
 
 
 #include <TL-Engine.h>	
@@ -28,11 +28,18 @@ const float SPEED = 30.0f;
 const float CAM_SPEED = 500.0f;
 
 PoolAllocator<Circle> CirclesPool{ NUM_CIRCLES };
-
 std::vector<Circle*> BlockCircles;
 std::vector<Circle*> MovingCircles;
-std::vector<IModel*> BlockCirclesRendered;
-std::map<std::string, IModel*> MovingCirclesRendered; 
+
+
+#ifdef Visual
+	// Pool allocator requires a constructor but Imodel is an interface
+	//PoolAllocator<IModel> ModelPool{ NUM_CIRCLES };
+	std::vector<IModel*> BlockCirclesRendered;
+	std::map<std::string, IModel*> MovingCirclesRendered;
+#endif 
+
+
 
 Timer gTimer;
 
@@ -62,7 +69,7 @@ void main()
 	{
 		gTimer.Tick();
 
-		Move(MovingCircles.data(), MovingCircles.size());
+		Move(*MovingCircles.data(), MovingCircles.size());
 
 		RunCollisionThreads();
 
@@ -86,6 +93,8 @@ void main()
 	Camera = myEngine->CreateCamera(kManual, 0, 0, -3000);
 
 	IMesh* SphereMesh = myEngine->LoadMesh("Sphere.x");
+
+
 
 	for (const auto movingCircle : MovingCircles)
 	{
