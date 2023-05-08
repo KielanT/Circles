@@ -45,8 +45,7 @@ void ControlCamera(I3DEngine* engine, ICamera* camera);
 
 void main()
 {
-	std::mutex cout_mutex;
-
+		
 	Init();
 
 	gTimer.Reset();
@@ -104,15 +103,11 @@ void main()
 		
 		myEngine->DrawScene();
 
-
 		/**** Update your scene each frame here ****/
 		Move(MovingCircles.data(), MovingCircles.size());
 
-
 		RunCollisionThreads();
 
-
-	
 		ControlCamera(myEngine, Camera);
 
 
@@ -182,6 +177,15 @@ void Move(Circle* circles, uint32_t numCirlces)
 	{
 		circles->Position += (SPEED * circles->Velocity) * gTimer.GetDeltaTime();
 
+		if (circles->Position.x < -RANGE_POSITION || circles->Position.x > RANGE_POSITION)
+		{
+			circles->Velocity.x = -circles->Velocity.x;
+		}
+
+		if (circles->Position.y < -RANGE_POSITION || circles->Position.y > RANGE_POSITION)
+		{
+			circles->Velocity.y = -circles->Velocity.y;
+		}
 
 #ifdef Visual
 		
