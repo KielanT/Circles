@@ -15,6 +15,7 @@ using namespace tle;
 #include "Entity.h"
 #include "Collision.h"
 #include "ThreadHelper.h"
+#include "PoolAllocator.h"
 
 
 
@@ -26,8 +27,10 @@ const float SPEED = 30.0f;
 
 const float CAM_SPEED = 500.0f;
 
-std::vector<Circle> BlockCircles;
-std::vector<Circle> MovingCircles;
+PoolAllocator<Circle> CirclesPool{ NUM_CIRCLES };
+
+std::vector<Circle*> BlockCircles;
+std::vector<Circle*> MovingCircles;
 std::vector<IModel*> BlockCirclesRendered;
 std::map<std::string, IModel*> MovingCirclesRendered; 
 
@@ -86,18 +89,20 @@ void main()
 
 	for (const auto movingCircle : MovingCircles)
 	{
-		IModel* Model = SphereMesh->CreateModel(movingCircle.Position.x, movingCircle.Position.y, 0);
+		IModel* Model = SphereMesh->CreateModel(movingCircle->Position.x, movingCircle->Position.y, 0);
 		Model->SetSkin("brick1.jpg");
-		MovingCirclesRendered[movingCircle.Name] = Model;
+		MovingCirclesRendered[movingCircle->Name] = Model;
 	}
 
 
 	for (const auto blockCircle : BlockCircles)
 	{
-		IModel* Model = SphereMesh->CreateModel(blockCircle.Position.x, blockCircle.Position.y, 0);
+		IModel* Model = SphereMesh->CreateModel(blockCircle->Position.x, blockCircle->Position.y, 0);
 		Model->SetSkin("CueMetal.jpg");
 		BlockCirclesRendered.push_back(Model);
 	}
+
+
 
 	// The main game loop, repeat until engine is stopped
 	while (myEngine->IsRunning())
@@ -108,7 +113,7 @@ void main()
 		myEngine->DrawScene();
 
 		/**** Update your scene each frame here ****/
-		Move(MovingCircles.data(), MovingCircles.size());
+		Move(*MovingCircles.data(), MovingCircles.size());
 
 		RunCollisionThreads();
 
@@ -154,24 +159,24 @@ void Init()
 
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
-		Circle circle;
-		circle.Position = { randLoc(mt), randLoc(mt) };
-		circle.Radius = RADIUS;
-		circle.Velocity = { 0.0f, 0.0f };
-		circle.Name = "Block: " + std::to_string(i);
-		circle.Colour = { 1, 0, 0 };
+		auto circle = CirclesPool.Get();
+		circle->Position = { randLoc(mt), randLoc(mt) };
+		circle->Radius = RADIUS;
+		circle->Velocity = { 0.0f, 0.0f };
+		circle->Name = "Block: " + std::to_string(i);
+		circle->Colour = { 1, 0, 0 };
 
 		BlockCircles.push_back(circle);
 	}
 
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
-		Circle circle;
-		circle.Position = { randLoc(mt), randLoc(mt) };
-		circle.Radius = RADIUS;
-		circle.Velocity = { randVel(mt), randVel(mt) };
-		circle.Name = "Moving: " + std::to_string(i);
-		circle.Colour = { 0, 0, 1 };
+		auto circle = CirclesPool.Get();
+		circle->Position = { randLoc(mt), randLoc(mt) };
+		circle->Radius = RADIUS;
+		circle->Velocity = { randVel(mt), randVel(mt) };
+		circle->Name = "Moving: " + std::to_string(i);
+		circle->Colour = { 0, 0, 1 };
 
 		MovingCircles.push_back(circle);
 	}
@@ -241,8 +246,8 @@ void RunCollisionThreads()
 	for (uint32_t i = 0; i < NumWorkers; ++i)
 	{
 		auto& work = gCollisionWorkers[i].second;
-		work.BlockingCircles = BlockCircles.data();
-		work.MovingCircles = movingCircles;
+		work.BlockingCircles = *BlockCircles.data();
+		work.MovingCircles = *movingCircles;
 		work.NumMovingCircles = (NUM_CIRCLES / 2) / (NumWorkers + 1);
 		work.NumBlockCircles = NUM_CIRCLES / 2;
 		work.Time = gTimer.GetTime();
@@ -260,7 +265,7 @@ void RunCollisionThreads()
 
 	// Do collision for the remaining circles
 	uint32_t numRemainingCircles = (NUM_CIRCLES / 2) - static_cast<uint32_t>(movingCircles - MovingCircles.data());
-	Collision::SpheresToSpheres(movingCircles, BlockCircles.data(), numRemainingCircles, NUM_CIRCLES / 2, gTimer.GetTime());
+	Collision::SpheresToSpheres(*movingCircles, *BlockCircles.data(), numRemainingCircles, NUM_CIRCLES / 2, gTimer.GetTime());
 
 	for (uint32_t i = 0; i < NumWorkers; ++i)
 	{

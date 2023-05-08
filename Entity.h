@@ -6,10 +6,12 @@
 
 struct Circle
 {
-    CVector2 Position;
-    CVector2 Velocity;
-    CVector3 Colour;
-    float Radius;
-    int HP = 100;
-    std::string Name;
+    CVector2 Position{ 0.0f, 0.0f };
+    CVector2 Velocity{ 0.0f, 0.0f };
+    CVector3 Colour{ 0.0f, 0.0f, 0.0f };
+    float Radius{ 1.0f };
+    int HP{ 100 };
+    std::string Name{ "" };
+    
+    Circle() = default;
 };
