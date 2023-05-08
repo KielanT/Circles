@@ -9,6 +9,7 @@ using namespace tle;
 #include <iostream>
 #include <random>
 #include <vector>
+#include <map>
 
 #include "Timer.h"
 #include "Entity.h"
@@ -16,7 +17,8 @@ using namespace tle;
 #include "ThreadHelper.h"
 
 
-const int NUM_CIRCLES = 2000;
+
+const int NUM_CIRCLES = 1000;
 const float RANGE_POSITION = 1000.0f;
 const float RANGE_VELOCITY = 5.0f;
 const float RADIUS = 10.0f;
@@ -27,7 +29,7 @@ const float CAM_SPEED = 500.0f;
 std::vector<Circle> BlockCircles;
 std::vector<Circle> MovingCircles;
 std::vector<IModel*> BlockCirclesRendered;
-std::vector<std::pair<std::string, IModel*>> MovingCirclesRendered; 
+std::map<std::string, IModel*> MovingCirclesRendered; 
 
 Timer gTimer;
 
@@ -84,15 +86,15 @@ void main()
 
 	for (const auto movingCircle : MovingCircles)
 	{
-		IModel* Model = SphereMesh->CreateModel(movingCircle.Position.x, movingCircle.Position.y, movingCircle.Position.z);
+		IModel* Model = SphereMesh->CreateModel(movingCircle.Position.x, movingCircle.Position.y, 0);
 		Model->SetSkin("brick1.jpg");
-		MovingCirclesRendered.push_back(std::make_pair(movingCircle.Name, Model));
+		MovingCirclesRendered[movingCircle.Name] = Model;
 	}
 
 
 	for (const auto blockCircle : BlockCircles)
 	{
-		IModel* Model = SphereMesh->CreateModel(blockCircle.Position.x, blockCircle.Position.y, blockCircle.Position.z);
+		IModel* Model = SphereMesh->CreateModel(blockCircle.Position.x, blockCircle.Position.y, 0);
 		Model->SetSkin("CueMetal.jpg");
 		BlockCirclesRendered.push_back(Model);
 	}
@@ -110,12 +112,14 @@ void main()
 
 		RunCollisionThreads();
 
-		ControlCamera(myEngine, Camera);
+		
 
 		std::lock_guard<std::mutex> lock(coutMutex);
 		{
 			std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
 		}
+
+		ControlCamera(myEngine, Camera);
 	}
 
 	// Delete the 3D engine now we are finished with it
@@ -151,9 +155,9 @@ void Init()
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
 		Circle circle;
-		circle.Position = { randLoc(mt), randLoc(mt), 0.0f };
+		circle.Position = { randLoc(mt), randLoc(mt) };
 		circle.Radius = RADIUS;
-		circle.Velocity = { 0.0f, 0.0f, 0.0f };
+		circle.Velocity = { 0.0f, 0.0f };
 		circle.Name = "Block: " + std::to_string(i);
 		circle.Colour = { 1, 0, 0 };
 
@@ -163,9 +167,9 @@ void Init()
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
 		Circle circle;
-		circle.Position = { randLoc(mt), randLoc(mt), 0.0f };
+		circle.Position = { randLoc(mt), randLoc(mt) };
 		circle.Radius = RADIUS;
-		circle.Velocity = { randVel(mt), randVel(mt), 0.0f };
+		circle.Velocity = { randVel(mt), randVel(mt) };
 		circle.Name = "Moving: " + std::to_string(i);
 		circle.Colour = { 0, 0, 1 };
 
@@ -193,14 +197,16 @@ void Move(Circle* circles, uint32_t numCirlces)
 
 #ifdef Visual
 		
-		for (auto& movingCircle : MovingCirclesRendered)
-		{
-			if (movingCircle.first == circles->Name)
-			{
-				movingCircle.second->SetPosition(circles->Position.x, circles->Position.y, circles->Position.z);
-				break;
-			}
-		}
+		//or (auto& movingCircle : MovingCirclesRendered)
+		//
+		//	if (movingCircle.first == circles->Name)
+		//	{
+		//		movingCircle.second->SetPosition(circles->Position.x, circles->Position.y, circles->Position.z);
+		//		break;
+		//	}
+		//
+		// A map is quicker than doing the above code
+		MovingCirclesRendered[circles->Name]->SetPosition(circles->Position.x, circles->Position.y, 0);
 	
 #endif 
 

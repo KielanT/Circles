@@ -42,12 +42,12 @@ void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint
 	while (BlockCircles != BlockCirclesEnd)
 	{
 		const float distance = sqrt((movingCirlce.Position.x - BlockCircles->Position.x) * (movingCirlce.Position.x - BlockCircles->Position.x) +
-									(movingCirlce.Position.y - BlockCircles->Position.y) * (movingCirlce.Position.y - BlockCircles->Position.y) +
-									(movingCirlce.Position.z - BlockCircles->Position.z) * (movingCirlce.Position.z - BlockCircles->Position.z));
+									(movingCirlce.Position.y - BlockCircles->Position.y) * (movingCirlce.Position.y - BlockCircles->Position.y) /*+
+									(movingCirlce.Position.z - BlockCircles->Position.z) * (movingCirlce.Position.z - BlockCircles->Position.z)*/);
 
 		if (distance < movingCirlce.Radius + BlockCircles->Radius)
 		{
-			CVector3 normal = BlockCircles->Position - movingCirlce.Position;
+			CVector2 normal = BlockCircles->Position - movingCirlce.Position;
 			movingCirlce.Velocity = Reflect(movingCirlce.Velocity, Normalise(normal));
 			
 			movingCirlce.HP -= 20;

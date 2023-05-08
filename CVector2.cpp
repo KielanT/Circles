@@ -106,13 +106,8 @@ CVector2 Normalise(const CVector2& v)
 
 CVector2 Reflect(const CVector2& toReflect, const CVector2& normal)
 {
-    CVector2 outVec;
-    outVec = toReflect - (2 * Dot(toReflect, normal)) * normal;
-    
-   // float dotProduct = Dot(toReflect, normal);
+    CVector2 outVector;
+    outVector = toReflect - (2 * Dot(toReflect, normal)) * normal;
 
-    // Calculate the reflection vector.
-    //CVector2 reflection = toReflect - 2.0f * dotProduct * normal;
-    
-    return outVec;
+    return outVector;
 }

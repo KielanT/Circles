@@ -2,11 +2,12 @@
 
 #include <string>
 #include "CVector3.h"
+#include "CVector2.h"
 
 struct Circle
 {
-    CVector3 Position;
-    CVector3 Velocity;
+    CVector2 Position;
+    CVector2 Velocity;
     CVector3 Colour;
     float Radius;
     int HP = 100;
