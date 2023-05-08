@@ -45,7 +45,8 @@ void ControlCamera(I3DEngine* engine, ICamera* camera);
 
 void main()
 {
-		
+	std::mutex coutMutex;
+
 	Init();
 
 	gTimer.Reset();
@@ -55,12 +56,15 @@ void main()
 	while (true)
 	{
 		gTimer.Tick();
-		
+
 		Move(MovingCircles.data(), MovingCircles.size());
-		
+
 		RunCollisionThreads();
 
-		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
+		std::lock_guard<std::mutex> lock(coutMutex);
+		{
+			std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
+		}
 	}
 #endif
 
@@ -77,8 +81,6 @@ void main()
 	Camera = myEngine->CreateCamera(kManual, 0, 0, -3000);
 
 	IMesh* SphereMesh = myEngine->LoadMesh("Sphere.x");
-
-
 
 	for (const auto movingCircle : MovingCircles)
 	{
@@ -100,7 +102,7 @@ void main()
 	{
 		gTimer.Tick();
 		// Draw the scene
-		
+
 		myEngine->DrawScene();
 
 		/**** Update your scene each frame here ****/
@@ -110,8 +112,10 @@ void main()
 
 		ControlCamera(myEngine, Camera);
 
-
-		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
+		std::lock_guard<std::mutex> lock(coutMutex);
+		{
+			std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
+		}
 	}
 
 	// Delete the 3D engine now we are finished with it

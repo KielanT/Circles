@@ -36,7 +36,7 @@ void Collision::SpheresToSpheres(Circle* MovingCircles, Circle* BlockCircles, ui
 
 void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint32_t numBlockCircles, float time)
 {
-	static std::mutex cout_mutex;
+	static std::mutex coutMutex;
 
 	auto BlockCirclesEnd = BlockCircles + numBlockCircles;
 	while (BlockCircles != BlockCirclesEnd)
@@ -54,7 +54,7 @@ void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint
 			BlockCircles->HP -= 20;
 
 			// Stops the couts from getting jumbled with the other threads
-			std::lock_guard<std::mutex> lock(cout_mutex);
+			std::lock_guard<std::mutex> lock(coutMutex);
 			{
 				std::cout << std::endl;
 				std::cout << "Collision Between: " << movingCirlce.Name << " and " << BlockCircles->Name << std::endl;
