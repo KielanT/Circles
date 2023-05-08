@@ -1,10 +1,11 @@
 // Define used for switching between console and visualisation 
-//#define Console
-#define Visual
+#define Console
+//#define Visual
 
-
+#ifdef Visual
 #include <TL-Engine.h>	
 using namespace tle;
+#endif 
 
 #include <iostream>
 #include <random>
@@ -37,13 +38,15 @@ std::vector<Circle*> MovingCircles;
 	//PoolAllocator<IModel> ModelPool{ NUM_CIRCLES };
 	std::vector<IModel*> BlockCirclesRendered;
 	std::map<std::string, IModel*> MovingCirclesRendered;
+
+	void ControlCamera(I3DEngine* engine, ICamera* camera);
 #endif 
 
 
 
 Timer gTimer;
 
-// Theads
+// Threads
 const uint32_t MAX_WORKERS = 31; 
 std::pair<WorkerThread, CollisionWork> gCollisionWorkers[MAX_WORKERS];
 uint32_t NumWorkers; 
@@ -52,7 +55,8 @@ void Init();
 void Move(Circle* circles, uint32_t numCirlces);
 void CollisionThread(uint32_t thread);
 void RunCollisionThreads();
-void ControlCamera(I3DEngine* engine, ICamera* camera);
+
+
 
 
 void main()
@@ -69,10 +73,8 @@ void main()
 	{
 		gTimer.Tick();
 		
-
+		
 		Move(*MovingCircles.data(), MovingCircles.size());
-		RunMoveThread();
-
 
 		RunCollisionThreads();
 
@@ -156,7 +158,7 @@ void Init()
 {
 	NumWorkers = std::thread::hardware_concurrency(); // Gets the amount of threads the system has (is only a hint may not work)
 	if (NumWorkers == 0) NumWorkers = 8; // If there wasn't any hinds force threads count to be 8
-	NumWorkers -= 2; // Removes 1 worker since the main thread is already running
+	NumWorkers -= 1; // Removes 1 worker since the main thread is already running
 
 	// Start the collision threads
 	for (uint32_t i = 0; i < NumWorkers; ++i)
@@ -202,6 +204,7 @@ void Move(Circle* circles, uint32_t numCirlces)
 
 	while (circles != circlesEnd)
 	{
+
 		circles->Position += (SPEED * circles->Velocity) * gTimer.GetDeltaTime();
 
 		if (circles->Position.x < -RANGE_POSITION || circles->Position.x > RANGE_POSITION)
@@ -294,7 +297,7 @@ void RunCollisionThreads()
 	}
 }
 
-
+#ifdef Visual
 void ControlCamera(I3DEngine* engine, ICamera* camera)
 {
 
@@ -316,3 +319,4 @@ void ControlCamera(I3DEngine* engine, ICamera* camera)
 		camera->MoveX(CAM_SPEED * gTimer.GetDeltaTime());
 	}
 }
+#endif
