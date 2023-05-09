@@ -1,6 +1,6 @@
 // Define used for switching between console and visualisation 
-#define Console
-//#define Visual
+//#define Console
+#define Visual
 
 #ifdef Visual
 #include <TL-Engine.h>	
@@ -17,7 +17,7 @@ using namespace tle;
 #include "Collision.h"
 #include "ThreadHelper.h"
 #include "PoolAllocator.h"
-
+#include "QuadTree.h"
 
 
 const int NUM_CIRCLES = 1000;
@@ -31,6 +31,7 @@ const float CAM_SPEED = 500.0f;
 PoolAllocator<Circle> CirclesPool{ NUM_CIRCLES };
 std::vector<Circle*> BlockCircles;
 std::vector<Circle*> MovingCircles;
+QuadTree gQuadTree({ -RANGE_POSITION, -RANGE_POSITION }, { RANGE_POSITION, RANGE_POSITION });
 
 
 #ifdef Visual
@@ -46,22 +47,16 @@ std::vector<Circle*> MovingCircles;
 
 Timer gTimer;
 
-// Threads
-const uint32_t MAX_WORKERS = 31; 
-std::pair<WorkerThread, CollisionWork> gCollisionWorkers[MAX_WORKERS];
-uint32_t NumWorkers; 
+
 
 void Init();
-void Move(Circle* circles, uint32_t numCirlces);
-void CollisionThread(uint32_t thread);
-void RunCollisionThreads();
+void Move(Circle* circles, uint32_t numCircles);
 
 
 
 
 void main()
 {
-	static std::mutex coutMutex;
 
 	Init();
 
@@ -73,16 +68,12 @@ void main()
 	{
 		gTimer.Tick();
 		
+		gQuadTree.CheckCollisions(MovingCircles);
+
+
+
+		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
 		
-		Move(*MovingCircles.data(), MovingCircles.size());
-
-		RunCollisionThreads();
-
-		std::unique_lock<std::mutex> l(coutMutex);
-		{
-			// This never gets printed so it is called on collision (not ideal)
-			std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
-		}
 	}
 #endif
 
@@ -128,16 +119,12 @@ void main()
 		myEngine->DrawScene();
 
 		/**** Update your scene each frame here ****/
-		Move(*MovingCircles.data(), MovingCircles.size());
-
-		RunCollisionThreads();
-
+		Move(*MovingCircles.data(), NUM_CIRCLES / 2);
 		
+		gQuadTree.CheckCollisions(MovingCircles);
 
-		std::lock_guard<std::mutex> lock(coutMutex);
-		{
-			std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
-		}
+		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
+		
 
 		ControlCamera(myEngine, Camera);
 	}
@@ -146,26 +133,11 @@ void main()
 	myEngine->Delete();
 #endif
 
-	for (uint32_t i = 0; i < NumWorkers; ++i)
-	{
-		gCollisionWorkers[i].first.Thread.detach();
-	}
-
 
 }
 
 void Init()
 {
-	NumWorkers = std::thread::hardware_concurrency(); // Gets the amount of threads the system has (is only a hint may not work)
-	if (NumWorkers == 0) NumWorkers = 8; // If there wasn't any hinds force threads count to be 8
-	NumWorkers -= 1; // Removes 1 worker since the main thread is already running
-
-	// Start the collision threads
-	for (uint32_t i = 0; i < NumWorkers; ++i)
-	{
-		gCollisionWorkers[i].first.Thread = std::thread(&CollisionThread, i);
-	}
-
 
 	std::random_device rd;
 	std::mt19937 mt(rd());
@@ -182,6 +154,7 @@ void Init()
 		circle->Name = "Block: " + std::to_string(i);
 		circle->Colour = { 1, 0, 0 };
 
+		gQuadTree.Add(circle);
 		BlockCircles.push_back(circle);
 	}
 
@@ -194,17 +167,18 @@ void Init()
 		circle->Name = "Moving: " + std::to_string(i);
 		circle->Colour = { 0, 0, 1 };
 
+		gQuadTree.Add(circle);
 		MovingCircles.push_back(circle);
 	}
 }
 
-void Move(Circle* circles, uint32_t numCirlces)
+
+void Move(Circle* circles, uint32_t numCircles)
 {
-	auto circlesEnd = circles + numCirlces;
+	auto circlesEnd = circles + numCircles;
 
 	while (circles != circlesEnd)
 	{
-
 		circles->Position += (SPEED * circles->Velocity) * gTimer.GetDeltaTime();
 
 		if (circles->Position.x < -RANGE_POSITION || circles->Position.x > RANGE_POSITION)
@@ -218,7 +192,7 @@ void Move(Circle* circles, uint32_t numCirlces)
 		}
 
 #ifdef Visual
-		
+
 		//or (auto& movingCircle : MovingCirclesRendered)
 		//
 		//	if (movingCircle.first == circles->Name)
@@ -229,71 +203,10 @@ void Move(Circle* circles, uint32_t numCirlces)
 		//
 		// A map is quicker than doing the above code
 		MovingCirclesRendered[circles->Name]->SetPosition(circles->Position.x, circles->Position.y, 0);
-	
+
 #endif 
 
 		++circles;
-	}
-}
-
-
-
-void CollisionThread(uint32_t thread)
-{
-	auto& worker = gCollisionWorkers[thread].first;
-	auto& work = gCollisionWorkers[thread].second;
-	while (true)
-	{
-		{
-			std::unique_lock<std::mutex> l(worker.Lock);
-			worker.WorkReady.wait(l, [&]() { return !work.Complete; });
-		}
-
-		Collision::SpheresToSpheres(work.MovingCircles, work.BlockingCircles, work.NumMovingCircles, work.NumBlockCircles, work.Time, gTimer.GetDeltaTime());
-
-		{
-			std::unique_lock<std::mutex> l(worker.Lock);
-			work.Complete = true;
-			worker.WorkReady.notify_one();
-		}
-	}
-}
-
-void RunCollisionThreads()
-{
-	auto movingCircles = MovingCircles.data();
-	for (uint32_t i = 0; i < NumWorkers; ++i)
-	{
-		auto& work = gCollisionWorkers[i].second;
-		work.BlockingCircles = *BlockCircles.data();
-		work.MovingCircles = *movingCircles;
-		work.NumMovingCircles = (NUM_CIRCLES / 2) / (NumWorkers + 1);
-		work.NumBlockCircles = NUM_CIRCLES / 2;
-		work.Time = gTimer.GetTime();
-
-		auto& workerThread = gCollisionWorkers[i].first;
-		{
-			std::unique_lock<std::mutex> l(workerThread.Lock);
-			work.Complete = false;
-		}
-
-		workerThread.WorkReady.notify_one();
-
-		movingCircles += work.NumMovingCircles;
-	}
-
-	// Do collision for the remaining circles
-	uint32_t numRemainingCircles = (NUM_CIRCLES / 2) - static_cast<uint32_t>(movingCircles - MovingCircles.data());
-	Collision::SpheresToSpheres(*movingCircles, *BlockCircles.data(), numRemainingCircles, NUM_CIRCLES / 2, gTimer.GetTime(), gTimer.GetDeltaTime());
-
-
-	for (uint32_t i = 0; i < NumWorkers; ++i)
-	{
-		auto& workerThread = gCollisionWorkers[i].first;
-		auto& work = gCollisionWorkers[i].second;
-
-		std::unique_lock<std::mutex> l(workerThread.Lock);
-		workerThread.WorkReady.wait(l, [&]() { return work.Complete; });
 	}
 }
 

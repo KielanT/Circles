@@ -70,3 +70,26 @@ void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint
 	}
 }
 
+void Collision::CircleToCirlce(Circle* circle, Circle* other)
+{
+	const float distance = sqrt((circle->Position.x - other->Position.x) * (circle->Position.x - other->Position.x) +
+								(circle->Position.y - other->Position.y) * (circle->Position.y - other->Position.y));
+
+	if (distance < circle->Radius + other->Radius)
+	{
+		CVector2 normal = circle->Position - other->Position;
+		circle->Velocity = Reflect(circle->Velocity, Normalise(normal));
+		other->Velocity = Reflect(other->Velocity, Normalise(normal));
+
+		circle->HP -= 20;
+		other->HP -= 20;
+
+		std::cout << std::endl;
+		std::cout << "Collision Between: " << circle->Name << " and " << other->Name << std::endl;
+		std::cout << "Time of collision: " << time << " seconds since start of program" << std::endl;
+		std::cout << circle->Name << " HP:" << std::to_string(circle->HP) << std::endl;
+		std::cout << other->Name << " HP:" << std::to_string(other->HP) << std::endl;
+		std::cout << std::endl;
+	}
+}
+
