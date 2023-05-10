@@ -50,6 +50,7 @@ Timer gTimer;
 
 void Init();
 void Move(Circle* circles, uint32_t numCircles);
+void Move(Circle* circles);
 
 
 
@@ -68,7 +69,41 @@ void main()
 		
 		gTimer.Tick();
 		
-		Move(*MovingCircles.data(), NUM_CIRCLES / 2);
+		quadTree->Clear();
+
+
+		for (auto& allCircles : MovingCircles)
+		{
+			Move(allCircles);
+		}
+
+
+		for (auto& allCircles : AllObjects)
+		{
+			allCircles->Bounds.Centre = allCircles->Position;
+			quadTree->Insert(allCircles);
+		}
+
+	
+
+		for (auto& allCircles : AllObjects)
+		{
+			AABB queryRange(allCircles->Position - CVector2(allCircles->Radius, allCircles->Radius), allCircles->Radius * 2.0f);
+
+			auto InRange = quadTree->QueryRange(queryRange);
+
+
+			for (auto& otherCircle : InRange)
+			{
+				if (allCircles != otherCircle)
+				{
+					if (allCircles->Bounds.Intersects(otherCircle->Bounds))
+					{
+						Collision::CircleToCirlce(allCircles, otherCircle, gTimer.GetTime());
+					}
+				}
+			}
+		}
 
 
 
@@ -119,7 +154,14 @@ void main()
 		myEngine->DrawScene();
 
 		
-		Move(*MovingCircles.data(), NUM_CIRCLES / 2);
+		//Move(*MovingCircles.data(), NUM_CIRCLES / 2);
+
+		
+
+		for (auto& allCircles : MovingCircles)
+		{
+			Move(allCircles);
+		}
 
 		quadTree->Clear();
 		for (auto& allCircles : AllObjects)
@@ -128,16 +170,21 @@ void main()
 			quadTree->Insert(allCircles);
 		}
 
-		
-
 		for (auto& allCircles : AllObjects)
 		{
-			auto circles = quadTree->QueryRange(quadTree->Boundary);
-			for (auto& cir : circles)
+			AABB queryRange(allCircles->Position - CVector2(allCircles->Radius, allCircles->Radius), allCircles->Radius * 2.0f);
+
+			auto InRange = quadTree->QueryRange(queryRange);
+
+
+			for (auto& otherCircle : InRange)
 			{
-				if (allCircles != cir && allCircles->Bounds.Intersects(cir->Bounds))
+				if (allCircles != otherCircle) 
 				{
-					Collision::CircleToCirlce(allCircles, cir);
+					if (allCircles->Bounds.Intersects(otherCircle->Bounds)) 
+					{
+						Collision::CircleToCirlce(allCircles, otherCircle, gTimer.GetTime());
+					}
 				}
 			}
 		}
@@ -233,6 +280,27 @@ void Move(Circle* circles, uint32_t numCircles)
 
 		++circles;
 	}
+}
+
+void Move(Circle* circle)
+{
+	circle->Position += (SPEED * circle->Velocity) * gTimer.GetDeltaTime();
+
+
+	if (circle->Position.x < -RANGE_POSITION || circle->Position.x > RANGE_POSITION)
+	{
+		circle->Velocity.x = -circle->Velocity.x;
+	}
+
+	if (circle->Position.y < -RANGE_POSITION || circle->Position.y > RANGE_POSITION)
+	{
+		circle->Velocity.y = -circle->Velocity.y;
+	}
+
+#ifdef Visual
+
+	MovingCirclesRendered[circle->Name]->SetPosition(circle->Position.x, circle->Position.y, 0);
+#endif 
 }
 
 #ifdef Visual

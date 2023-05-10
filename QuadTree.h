@@ -16,6 +16,8 @@ public:
 
 	std::vector<Circle*> QueryRange(AABB range);
 
+	void Update(Circle* circle);
+
 	AABB Boundary;
 
 	void Clear();

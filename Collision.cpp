@@ -70,7 +70,7 @@ void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint
 	}
 }
 
-void Collision::CircleToCirlce(Circle* circle, Circle* other)
+void Collision::CircleToCirlce(Circle* circle, Circle* other, float time)
 {
 	const float distance = sqrt((circle->Position.x - other->Position.x) * (circle->Position.x - other->Position.x) +
 								(circle->Position.y - other->Position.y) * (circle->Position.y - other->Position.y));

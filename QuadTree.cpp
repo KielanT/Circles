@@ -82,6 +82,12 @@ std::vector<Circle*> QuadTree::QueryRange(AABB range)
 	return CirclesInRange;
 }
 
+void QuadTree::Update(Circle* circle)
+{
+	Remove(circle);
+	Insert(circle);
+}
+
 void QuadTree::Clear()
 {
 	m_Circles.clear();
