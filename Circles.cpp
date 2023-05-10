@@ -1,6 +1,6 @@
 // Define used for switching between console and visualisation 
-//#define Console
-#define Visual
+#define Console
+//#define Visual
 
 #ifdef Visual
 #include <TL-Engine.h>	
@@ -19,8 +19,7 @@ using namespace tle;
 #include "PoolAllocator.h"
 #include "QuadTree.h"
 
-
-const int NUM_CIRCLES = 100;
+const int NUM_CIRCLES = 1000;
 const float RANGE_POSITION = 1000.0f;
 const float RANGE_VELOCITY = 5.0f;
 const float RADIUS = 10.0f;
@@ -33,7 +32,7 @@ std::vector<Circle*> AllObjects;
 std::vector<Circle*> MovingCircles;
 std::vector<Circle*> BlockCircles;
 
-QuadTree::QuadTree* quadTree = new QuadTree::QuadTree(QuadTree::AABB(CVector2(0.0f, 0.0f), RANGE_POSITION));
+QuadTree::QuadTree* quadTree = new QuadTree::QuadTree(QuadTree::AABB(CVector2(0.0f, 0.0f), RANGE_POSITION), 8);
 
 #ifdef Visual
 	// Pool allocator requires a constructor but Imodel is an interface
@@ -66,29 +65,25 @@ void main()
 
 	while (true)
 	{
-		
-		gTimer.Tick();
-		
+		float frameTime = gTimer.GetLapTime();
 		quadTree->Clear();
 
 
 		for (auto& allCircles : MovingCircles)
 		{
-			Move(allCircles);
+			Move(allCircles, frameTime);
 		}
 
-
+		quadTree->Clear();
 		for (auto& allCircles : AllObjects)
 		{
 			allCircles->Bounds.Centre = allCircles->Position;
 			quadTree->Insert(allCircles);
 		}
 
-	
-
 		for (auto& allCircles : AllObjects)
 		{
-			AABB queryRange(allCircles->Position - CVector2(allCircles->Radius, allCircles->Radius), allCircles->Radius * 2.0f);
+			QuadTree::AABB queryRange(allCircles->Position - CVector2(allCircles->Radius, allCircles->Radius), allCircles->Radius * 2.0f);
 
 			auto InRange = quadTree->QueryRange(queryRange);
 
@@ -97,17 +92,17 @@ void main()
 			{
 				if (allCircles != otherCircle)
 				{
-					if (allCircles->Bounds.Intersects(otherCircle->Bounds))
+
+					if (QuadTree::Intersects(allCircles->Bounds, otherCircle->Bounds))
 					{
-						Collision::CircleToCirlce(allCircles, otherCircle, gTimer.GetTime());
+						Collision::CircleToCirlce(allCircles, otherCircle, gTimer.GetTime(), frameTime);
 					}
 				}
 			}
 		}
 
 
-
-		std::cout << "Delta Time: " << gTimer.GetLapTime() << std::endl;
+		std::cout << "Frame Time: " << frameTime << std::endl;
 		
 	}
 #endif

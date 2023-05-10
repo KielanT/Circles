@@ -43,10 +43,10 @@ namespace QuadTree
 		CVector2 centre = Boundary.Centre;
 		float halfDimension = Boundary.HalfDimension / 2.0f;
 
-		m_NorthWest = new QuadTree(AABB(centre - CVector2(halfDimension, halfDimension), halfDimension));
-		m_NorthEast = new QuadTree(AABB(centre + CVector2(halfDimension, -halfDimension), halfDimension));
-		m_SouthWest = new QuadTree(AABB(centre + CVector2(-halfDimension, halfDimension), halfDimension));
-		m_SouthEast = new QuadTree(AABB(centre + CVector2(halfDimension, halfDimension), halfDimension));
+		m_NorthWest = new QuadTree(AABB(centre - CVector2(halfDimension, halfDimension), halfDimension), m_NodeCapacity);
+		m_NorthEast = new QuadTree(AABB(centre + CVector2(halfDimension, -halfDimension), halfDimension), m_NodeCapacity);
+		m_SouthWest = new QuadTree(AABB(centre + CVector2(-halfDimension, halfDimension), halfDimension), m_NodeCapacity);
+		m_SouthEast = new QuadTree(AABB(centre + CVector2(halfDimension, halfDimension), halfDimension), m_NodeCapacity);
 	}
 
 	std::vector<Circle*> QuadTree::QueryRange(AABB range)

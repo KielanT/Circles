@@ -9,7 +9,7 @@ namespace QuadTree
 	class QuadTree
 	{
 	public:
-		QuadTree(AABB boundary) : Boundary(boundary) {}
+		QuadTree(AABB boundary, int nodeCapacity) : Boundary(boundary), m_NodeCapacity(nodeCapacity) {}
 		~QuadTree();
 
 		bool Insert(Circle* circle);
@@ -18,13 +18,11 @@ namespace QuadTree
 
 		std::vector<Circle*> QueryRange(AABB range);
 
-
 		AABB Boundary;
 
 		void Clear();
 	private:
-		const int m_NodeCapacity = 4;
-
+		int m_NodeCapacity;
 
 		std::vector<Circle*> m_Circles;
 
