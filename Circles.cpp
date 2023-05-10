@@ -29,10 +29,10 @@ const float SPEED = 30.0f;
 const float CAM_SPEED = 500.0f;
 
 PoolAllocator<Circle> CirclesPool{ NUM_CIRCLES };
-std::vector<Circle*> BlockCircles;
+std::vector<Circle*> AllObjects;
 std::vector<Circle*> MovingCircles;
-QuadTree gQuadTree({ -RANGE_POSITION, -RANGE_POSITION }, { RANGE_POSITION, RANGE_POSITION });
-
+std::vector<Circle*> BlockCircles;
+QuadTree* quadTree = new QuadTree(0, Rectangle(-RANGE_POSITION, -RANGE_POSITION, RANGE_POSITION, RANGE_POSITION));
 
 #ifdef Visual
 	// Pool allocator requires a constructor but Imodel is an interface
@@ -47,8 +47,6 @@ QuadTree gQuadTree({ -RANGE_POSITION, -RANGE_POSITION }, { RANGE_POSITION, RANGE
 
 Timer gTimer;
 
-
-
 void Init();
 void Move(Circle* circles, uint32_t numCircles);
 
@@ -57,20 +55,37 @@ void Move(Circle* circles, uint32_t numCircles);
 
 void main()
 {
-
 	Init();
 
 	gTimer.Reset();
 
 #ifdef Console
 
+
 	while (true)
 	{
+		
 		gTimer.Tick();
 		
-		gQuadTree.CheckCollisions(MovingCircles);
+		Move(*MovingCircles.data(), NUM_CIRCLES / 2);
 
-
+		quadTree->Clear();
+		for (int i = 0; i < NUM_CIRCLES; i++)
+		{
+			quadTree->Insert(AllObjects[i]);
+		}
+		
+		std::vector<Circle*> returnObjects;
+		for (int i = 0; i < AllObjects.size(); i++)
+		{
+			returnObjects.clear();
+			quadTree->Retrieve(returnObjects, AllObjects[i]->Bounds);
+			for (int x = 0; x < returnObjects.size(); x++)
+			{
+				if(AllObjects[i] != AllObjects[x])
+					Collision::CircleToCirlce(AllObjects[i], AllObjects[x]);
+			}
+		}
 
 		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
 		
@@ -118,13 +133,27 @@ void main()
 
 		myEngine->DrawScene();
 
-		/**** Update your scene each frame here ****/
 		Move(*MovingCircles.data(), NUM_CIRCLES / 2);
-		
-		gQuadTree.CheckCollisions(MovingCircles);
+
+		quadTree->Clear();
+		for (int i = 0; i < NUM_CIRCLES; i++)
+		{
+			quadTree->Insert(AllObjects[i]);
+		}
+
+		std::vector<Circle*> returnObjects;
+		for (int i = 0; i < AllObjects.size(); i++)
+		{
+			returnObjects.clear();
+			quadTree->Retrieve(returnObjects, AllObjects[i]->Bounds);
+			for (int x = 0; x < returnObjects.size(); x++)
+			{
+				if (AllObjects[i] != AllObjects[x])
+					Collision::CircleToCirlce(AllObjects[i], AllObjects[x]);
+			}
+		}
 
 		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
-		
 
 		ControlCamera(myEngine, Camera);
 	}
@@ -153,9 +182,12 @@ void Init()
 		circle->Velocity = { 0.0f, 0.0f };
 		circle->Name = "Block: " + std::to_string(i);
 		circle->Colour = { 1, 0, 0 };
+		circle->Bounds = Rectangle(circle->Position.x - circle->Radius, circle->Position.y - circle->Radius, circle->Radius * 2, circle->Radius * 2);
 
-		gQuadTree.Add(circle);
+
+		quadTree->Insert(circle);
 		BlockCircles.push_back(circle);
+		AllObjects.push_back(circle);
 	}
 
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
@@ -166,9 +198,11 @@ void Init()
 		circle->Velocity = { randVel(mt), randVel(mt) };
 		circle->Name = "Moving: " + std::to_string(i);
 		circle->Colour = { 0, 0, 1 };
-
-		gQuadTree.Add(circle);
+		circle->Bounds = Rectangle(circle->Position.x - circle->Radius, circle->Position.y - circle->Radius, circle->Radius * 2, circle->Radius * 2);
+		
+		quadTree->Insert(circle);
 		MovingCircles.push_back(circle);
+		AllObjects.push_back(circle);
 	}
 }
 
@@ -180,6 +214,8 @@ void Move(Circle* circles, uint32_t numCircles)
 	while (circles != circlesEnd)
 	{
 		circles->Position += (SPEED * circles->Velocity) * gTimer.GetDeltaTime();
+		circles->Bounds.X = circles->Position.x - circles->Radius;
+		circles->Bounds.Y = circles->Position.y - circles->Radius;
 
 		if (circles->Position.x < -RANGE_POSITION || circles->Position.x > RANGE_POSITION)
 		{

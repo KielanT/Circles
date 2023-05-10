@@ -3,6 +3,7 @@
 #include <string>
 #include "CVector3.h"
 #include "CVector2.h"
+#include "Rectangle.h"
 
 struct Circle
 {
@@ -12,6 +13,7 @@ struct Circle
     float Radius{ 1.0f };
     int HP{ 100 };
     std::string Name{ "" };
-    
+    Rectangle Bounds;
+
     Circle() = default;
 };

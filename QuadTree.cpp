@@ -1,174 +1,122 @@
-// Implementation from
-// https://www.geeksforgeeks.org/quad-tree/
-// Updated for this project
-
 #include "QuadTree.h"
-#include <cmath>
-#include "Collision.h"
 
-QuadTree::QuadTree(CVector2 topL, CVector2 botR)
+QuadTree::QuadTree(int pLevel, Rectangle pBounds)
 {
-    m_TopLeft = topL;
-    m_BotRight = botR;
+	level = pLevel;
+	bounds = pBounds;
 
-    m_Node = nullptr;
-
-    m_TopLeftTree = nullptr;
-    m_TopRightTree = nullptr;
-    m_BotLeftTree = nullptr;
-    m_BotRightTree = nullptr;
-    
-}
-
-void QuadTree::Add(Circle* circle)
-{
-    if (circle == nullptr)
-        return;
-
-    Node* node = new Node(circle->Position, circle);
-
-    // Current QuadTree cannot contain it
-    if (!InBoundary(node->pos))
-        return;
-
-    // We are at a QuadTree of unit area
-    // We cannot subdivide this QuadTree further
-    if (std::abs(m_TopLeft.x - m_BotRight.x) <= 1
-        && std::abs(m_TopLeft.y - m_BotRight.y) <= 1)
+    for (int i = 0; i < 4; i++)
     {
-        if (m_Node == nullptr)
-            m_Node = node;
-        return;
-    }
-
-    if ((m_TopLeft.x + m_BotRight.x) / 2 >= node->pos.x)
-    {
-        // Indicates m_TopLeftTree
-        if ((m_TopLeft.y + m_BotRight.y) / 2 >= node->pos.y)
-        {
-            if (m_TopLeftTree == nullptr)
-                m_TopLeftTree = new QuadTree(
-                    CVector2(m_TopLeft.x, m_TopLeft.y),
-                    CVector2((m_TopLeft.x + m_BotRight.x) / 2,
-                        (m_TopLeft.y + m_BotRight.y) / 2));
-            m_TopLeftTree->Add(node->circle);
-        }
-
-        // Indicates botLeftTree
-        else
-        {
-            if (m_BotLeftTree == nullptr)
-                m_BotLeftTree = new QuadTree(
-                    CVector2(m_TopLeft.x,
-                        (m_TopLeft.y + m_BotRight.y) / 2),
-                    CVector2((m_TopLeft.x + m_BotRight.x) / 2,
-                        m_BotRight.y));
-            m_BotLeftTree->Add(node->circle);
-        }
-    }
-    else
-    {
-        // Indicates topRightTree
-        if ((m_TopLeft.y + m_BotRight.y) / 2 >= node->pos.y)
-        {
-            if (m_TopRightTree == nullptr)
-                m_TopRightTree = new QuadTree(
-                    CVector2((m_TopLeft.x + m_BotRight.x) / 2,
-                        m_TopLeft.y),
-                    CVector2(m_BotRight.x,
-                        (m_TopLeft.y + m_BotRight.y) / 2));
-            m_TopRightTree->Add(node->circle);
-        }
-
-        // Indicates m_BotRightTree
-        else
-        {
-            if (m_BotRightTree == nullptr)
-                m_BotRightTree = new QuadTree(
-                    CVector2((m_TopLeft.x + m_BotRight.x) / 2,
-                        (m_TopLeft.y + m_BotRight.y) / 2),
-                    CVector2(m_BotRight.x, m_BotRight.y));
-            m_BotRightTree->Add(node->circle);
-        }
+        nodes[i] = nullptr;
     }
 }
 
-Node* QuadTree::Search(CVector2 point)
+void QuadTree::Insert(Circle* circle)
 {
-    // Current quad cannot contain it
-    if (!InBoundary(point))
-        return nullptr;
-
-    // We are at a quad of unit length
-    // We cannot subdivide this quad further
-    if (m_Node != nullptr)
-        return m_Node;
-
-    if ((m_TopLeft.x + m_BotRight.x) / 2 >= point.x)
+    if (nodes[0] != nullptr)
     {
-        // Indicates topLeftTree
-        if ((m_TopLeft.y + m_BotRight.y) / 2 >= point.y)
+        int index = GetIndex(circle->Bounds);
+        if (index != -1)
         {
-            if (m_TopLeftTree == nullptr)
-                return nullptr;
-            return m_TopLeftTree->Search(point);
-        }
-
-        // Indicates botLeftTree
-        else
-        {
-            if (m_BotLeftTree == nullptr)
-                return nullptr;
-            return m_BotLeftTree->Search(point);
+            nodes[index]->Insert(circle);
+            return;
         }
     }
-    else
+
+    objects.push_back(circle);
+    if (objects.size() > MAX_OBJECTS && level < MAX_LEVELS)
     {
-        // Indicates topRightTree
-        if ((m_TopLeft.y + m_BotRight.y) / 2 >= point.y)
+        if (nodes[0] == nullptr)
         {
-            if (m_TopRightTree == nullptr)
-                return nullptr;
-            return m_TopRightTree->Search(point);
+            Split();
         }
-
-        // Indicates botRightTree
-        else
+        int i = 0;
+        while (i < objects.size())
         {
-            if (m_BotRightTree == nullptr)
-                return nullptr;
-            return m_BotRightTree->Search(point);
-        }
-    }
-}
-
-bool QuadTree::InBoundary(CVector2 point)
-{
-    return (point.x >= m_TopLeft.x && point.x <= m_BotRight.x
-        && point.y >= m_TopLeft.y && point.y <= m_BotRight.y);
-}
-
-void QuadTree::CheckCollisions(std::vector<Circle*>& Circles)
-{
-    // Check for collisions with circles in this node
-    if (m_Node != nullptr)
-    {
-        for (Circle* circle : Circles)
-        {
-            if (m_Node->circle != circle)
+            int index = GetIndex(objects[i]->Bounds);
+            if (index != -1)
             {
-                Collision::CircleToCirlce(circle, m_Node->circle);
+                nodes[index]->Insert(objects[i]);
+                objects.erase(objects.begin() + i);
+            }
+            else
+            {
+                i++;
             }
         }
     }
+}
 
-    // Recursively check for collisions with circles in child nodes
-    if (m_TopLeftTree != nullptr)
-        m_TopLeftTree->CheckCollisions(Circles);
-    if (m_TopRightTree != nullptr)
-        m_TopRightTree->CheckCollisions(Circles);
-    if (m_BotLeftTree != nullptr)
-        m_BotLeftTree->CheckCollisions(Circles);
-    if (m_BotRightTree != nullptr)
-        m_BotRightTree->CheckCollisions(Circles);
+void QuadTree::Split()
+{
+    int subWidth = (int)(bounds.Width / 2);
+    int subHeight = (int)(bounds.Height / 2);
+    int x = (int)bounds.X;
+    int y = (int)bounds.Y;
+    nodes[0] = new QuadTree(level + 1, Rectangle(x + subWidth, y, subWidth, subHeight));
+    nodes[1] = new QuadTree(level + 1, Rectangle(x, y, subWidth, subHeight));
+    nodes[2] = new QuadTree(level + 1, Rectangle(x, y + subHeight, subWidth, subHeight));
+    nodes[3] = new QuadTree(level + 1, Rectangle(x + subWidth, y + subHeight, subWidth, subHeight));
+}
+
+int QuadTree::GetIndex(Rectangle rect)
+{
+    int index = -1;
+    double verticalMidpoint = bounds.X + (bounds.Width / 2);
+    double horizontalMidpoint = bounds.Y + (bounds.Height / 2);
+    // Object can completely fit within the top quadrants 
+    bool topQuadrant = (rect.Y < horizontalMidpoint && rect.Y + rect.Height < horizontalMidpoint);
+    // Object can completely fit within the bottom quadrants 
+    bool bottomQuadrant = (rect.Y > horizontalMidpoint);
+    // Object can completely fit within the left quadrants 
+    if (rect.X < verticalMidpoint && rect.X + rect.Width < verticalMidpoint)
+    {
+        if (topQuadrant)
+        {
+            index = 1;
+        }
+        else if (bottomQuadrant)
+        {
+            index = 2;
+        }
+    }
+    // Object can completely fit within the right quadrants 
+    else if (rect.X > verticalMidpoint)
+    {
+        if (topQuadrant)
+        {
+            index = 0;
+        }
+        else if (bottomQuadrant)
+        {
+            index = 3;
+        }
+    }
+    return index;
+}
+
+std::vector<Circle*> QuadTree::Retrieve(std::vector<Circle*>& returnCircles, Rectangle rect)
+{
+    int index = GetIndex(rect);
+    if (index != -1 && nodes[0] != nullptr)
+    {
+        nodes[index]->Retrieve(returnCircles, rect);
+    }
+    returnCircles.insert(returnCircles.end(), objects.begin(), objects.end());
+    return returnCircles;
+}
+
+void QuadTree::Clear()
+{
+    if(!objects.empty())
+        objects.clear();
+
+    for (int i = 0; i < nodes.size(); i++)
+    {
+        if (nodes[i] != nullptr)
+        {
+            nodes[i]->Clear();
+            nodes[i] = nullptr;
+        }
+    }
 }
