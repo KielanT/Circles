@@ -3,31 +3,33 @@
 #include <vector>
 #include <array>
 #include "Entity.h"
-#include "Rectangle.h"
-
 
 class QuadTree
 {
 public:
-	QuadTree(int pLevel, Rectangle pBounds);
+	QuadTree(AABB boundary) : Boundary(boundary){}
+	~QuadTree();
 
-	void Insert(Circle* circle);
+	bool Insert(Circle* circle);
 
-	void Split();
-	
-	int GetIndex(Rectangle rect);
+	void Subdivide();
 
-	std::vector<Circle*> Retrieve(std::vector<Circle*>& returnCircles, Rectangle rect);
+	std::vector<Circle*> QueryRange(AABB range);
+
+	AABB Boundary;
 
 	void Clear();
-
-
 private:
-	int MAX_OBJECTS = 10;
-	int MAX_LEVELS = 5;
-	int level;
-	std::vector<Circle*> objects;
-	Rectangle bounds;
-	std::array<QuadTree*, 4> nodes;
+	const int m_NodeCapacity = 4;
+	
+
+	std::vector<Circle*> m_Circles;
+
+	QuadTree* m_NorthWest = nullptr;
+	QuadTree* m_NorthEast = nullptr;
+	QuadTree* m_SouthWest = nullptr;
+	QuadTree* m_SouthEast = nullptr;
 };
+
+
 

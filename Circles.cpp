@@ -20,7 +20,7 @@ using namespace tle;
 #include "QuadTree.h"
 
 
-const int NUM_CIRCLES = 1000;
+const int NUM_CIRCLES = 100;
 const float RANGE_POSITION = 1000.0f;
 const float RANGE_VELOCITY = 5.0f;
 const float RADIUS = 10.0f;
@@ -32,7 +32,8 @@ PoolAllocator<Circle> CirclesPool{ NUM_CIRCLES };
 std::vector<Circle*> AllObjects;
 std::vector<Circle*> MovingCircles;
 std::vector<Circle*> BlockCircles;
-QuadTree* quadTree = new QuadTree(0, Rectangle(-RANGE_POSITION, -RANGE_POSITION, RANGE_POSITION, RANGE_POSITION));
+
+QuadTree* quadTree = new QuadTree(AABB(CVector2(0.0f, 0.0f), RANGE_POSITION));
 
 #ifdef Visual
 	// Pool allocator requires a constructor but Imodel is an interface
@@ -69,23 +70,7 @@ void main()
 		
 		Move(*MovingCircles.data(), NUM_CIRCLES / 2);
 
-		quadTree->Clear();
-		for (int i = 0; i < NUM_CIRCLES; i++)
-		{
-			quadTree->Insert(AllObjects[i]);
-		}
-		
-		std::vector<Circle*> returnObjects;
-		for (int i = 0; i < AllObjects.size(); i++)
-		{
-			returnObjects.clear();
-			quadTree->Retrieve(returnObjects, AllObjects[i]->Bounds);
-			for (int x = 0; x < returnObjects.size(); x++)
-			{
-				if(AllObjects[i] != AllObjects[x])
-					Collision::CircleToCirlce(AllObjects[i], AllObjects[x]);
-			}
-		}
+
 
 		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
 		
@@ -133,25 +118,30 @@ void main()
 
 		myEngine->DrawScene();
 
+		
 		Move(*MovingCircles.data(), NUM_CIRCLES / 2);
 
 		quadTree->Clear();
-		for (int i = 0; i < NUM_CIRCLES; i++)
+		for (auto& allCircles : AllObjects)
 		{
-			quadTree->Insert(AllObjects[i]);
+			allCircles->Bounds.Centre = allCircles->Position;
+			quadTree->Insert(allCircles);
 		}
 
-		std::vector<Circle*> returnObjects;
-		for (int i = 0; i < AllObjects.size(); i++)
+		
+
+		for (auto& allCircles : AllObjects)
 		{
-			returnObjects.clear();
-			quadTree->Retrieve(returnObjects, AllObjects[i]->Bounds);
-			for (int x = 0; x < returnObjects.size(); x++)
+			auto circles = quadTree->QueryRange(quadTree->Boundary);
+			for (auto& cir : circles)
 			{
-				if (AllObjects[i] != AllObjects[x])
-					Collision::CircleToCirlce(AllObjects[i], AllObjects[x]);
+				if (allCircles != cir && allCircles->Bounds.Intersects(cir->Bounds))
+				{
+					Collision::CircleToCirlce(allCircles, cir);
+				}
 			}
 		}
+		
 
 		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
 
@@ -162,6 +152,7 @@ void main()
 	myEngine->Delete();
 #endif
 
+	if (quadTree != nullptr) delete quadTree;
 
 }
 
@@ -182,10 +173,10 @@ void Init()
 		circle->Velocity = { 0.0f, 0.0f };
 		circle->Name = "Block: " + std::to_string(i);
 		circle->Colour = { 1, 0, 0 };
-		circle->Bounds = Rectangle(circle->Position.x - circle->Radius, circle->Position.y - circle->Radius, circle->Radius * 2, circle->Radius * 2);
+		circle->Bounds = AABB(circle->Position, circle->Radius * 2);
 
 
-		quadTree->Insert(circle);
+		
 		BlockCircles.push_back(circle);
 		AllObjects.push_back(circle);
 	}
@@ -198,9 +189,8 @@ void Init()
 		circle->Velocity = { randVel(mt), randVel(mt) };
 		circle->Name = "Moving: " + std::to_string(i);
 		circle->Colour = { 0, 0, 1 };
-		circle->Bounds = Rectangle(circle->Position.x - circle->Radius, circle->Position.y - circle->Radius, circle->Radius * 2, circle->Radius * 2);
+		circle->Bounds = AABB(circle->Position, circle->Radius * 2);
 		
-		quadTree->Insert(circle);
 		MovingCircles.push_back(circle);
 		AllObjects.push_back(circle);
 	}
@@ -214,8 +204,7 @@ void Move(Circle* circles, uint32_t numCircles)
 	while (circles != circlesEnd)
 	{
 		circles->Position += (SPEED * circles->Velocity) * gTimer.GetDeltaTime();
-		circles->Bounds.X = circles->Position.x - circles->Radius;
-		circles->Bounds.Y = circles->Position.y - circles->Radius;
+		//circles->Bounds.Pos = circles->Position;
 
 		if (circles->Position.x < -RANGE_POSITION || circles->Position.x > RANGE_POSITION)
 		{
