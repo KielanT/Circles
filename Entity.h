@@ -4,6 +4,9 @@
 #include "CVector3.h"
 #include "CVector2.h"
 
+namespace QuadTree
+{
+
 struct AABB
 {
     CVector2 Centre;
@@ -12,21 +15,14 @@ struct AABB
     AABB(CVector2 centre, float halfDimension) : Centre(centre), HalfDimension(halfDimension) {}
     AABB() = default;
 
-    bool Contains(CVector2 point)
-    {
-        return (point.x >= Centre.x - HalfDimension &&
-            point.x <= Centre.x + HalfDimension &&
-            point.y >= Centre.y - HalfDimension &&
-            point.y <= Centre.y + HalfDimension);
-    }
 
-
-    bool Intersects(AABB other)
-    {
-        return (abs(Centre.x - other.Centre.x) < HalfDimension + other.HalfDimension &&
-            abs(Centre.y - other.Centre.y) < HalfDimension + other.HalfDimension);
-    }
 };
+
+bool Contains(AABB bound, CVector2 point);
+
+bool Intersects(AABB bound, AABB other);
+}
+
 
 struct Circle
 {
@@ -36,7 +32,7 @@ struct Circle
     float Radius{ 1.0f };
     int HP{ 100 };
     std::string Name{ "" };
-    AABB Bounds;
+    QuadTree::AABB Bounds;
 
     Circle() = default;
 };

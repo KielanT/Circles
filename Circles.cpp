@@ -24,7 +24,7 @@ const int NUM_CIRCLES = 100;
 const float RANGE_POSITION = 1000.0f;
 const float RANGE_VELOCITY = 5.0f;
 const float RADIUS = 10.0f;
-const float SPEED = 30.0f;
+const float SPEED = 100.0f;
 
 const float CAM_SPEED = 500.0f;
 
@@ -33,7 +33,7 @@ std::vector<Circle*> AllObjects;
 std::vector<Circle*> MovingCircles;
 std::vector<Circle*> BlockCircles;
 
-QuadTree* quadTree = new QuadTree(AABB(CVector2(0.0f, 0.0f), RANGE_POSITION));
+QuadTree::QuadTree* quadTree = new QuadTree::QuadTree(QuadTree::AABB(CVector2(0.0f, 0.0f), RANGE_POSITION));
 
 #ifdef Visual
 	// Pool allocator requires a constructor but Imodel is an interface
@@ -41,17 +41,16 @@ QuadTree* quadTree = new QuadTree(AABB(CVector2(0.0f, 0.0f), RANGE_POSITION));
 	std::vector<IModel*> BlockCirclesRendered;
 	std::map<std::string, IModel*> MovingCirclesRendered;
 
-	void ControlCamera(I3DEngine* engine, ICamera* camera);
+	void ControlCamera(I3DEngine* engine, ICamera* camera, float frameTime);
 #endif 
 
 
 
-Timer gTimer;
+
 
 void Init();
-void Move(Circle* circles, uint32_t numCircles);
-void Move(Circle* circles);
-
+void Move(Circle* circles, uint32_t numCircles, float frameTime);
+void Move(Circle* circles, float frameTime);
 
 
 
@@ -59,7 +58,8 @@ void main()
 {
 	Init();
 
-	gTimer.Reset();
+	Timer gTimer;
+	gTimer.Start();
 
 #ifdef Console
 
@@ -107,7 +107,7 @@ void main()
 
 
 
-		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
+		std::cout << "Delta Time: " << gTimer.GetLapTime() << std::endl;
 		
 	}
 #endif
@@ -126,7 +126,7 @@ void main()
 
 	IMesh* SphereMesh = myEngine->LoadMesh("Sphere.x");
 
-
+	
 
 	for (const auto movingCircle : MovingCircles)
 	{
@@ -148,19 +148,16 @@ void main()
 	// The main game loop, repeat until engine is stopped
 	while (myEngine->IsRunning())
 	{
-		gTimer.Tick();
 		// Draw the scene
+		float frameTime = gTimer.GetLapTime();
 
 		myEngine->DrawScene();
-
 		
-		//Move(*MovingCircles.data(), NUM_CIRCLES / 2);
-
 		
 
 		for (auto& allCircles : MovingCircles)
 		{
-			Move(allCircles);
+			Move(allCircles, frameTime);
 		}
 
 		quadTree->Clear();
@@ -172,7 +169,7 @@ void main()
 
 		for (auto& allCircles : AllObjects)
 		{
-			AABB queryRange(allCircles->Position - CVector2(allCircles->Radius, allCircles->Radius), allCircles->Radius * 2.0f);
+			QuadTree::AABB queryRange(allCircles->Position - CVector2(allCircles->Radius, allCircles->Radius), allCircles->Radius * 2.0f);
 
 			auto InRange = quadTree->QueryRange(queryRange);
 
@@ -181,18 +178,19 @@ void main()
 			{
 				if (allCircles != otherCircle) 
 				{
-					if (allCircles->Bounds.Intersects(otherCircle->Bounds)) 
+					
+					if (QuadTree::Intersects(allCircles->Bounds, otherCircle->Bounds))
 					{
-						Collision::CircleToCirlce(allCircles, otherCircle, gTimer.GetTime());
+						Collision::CircleToCirlce(allCircles, otherCircle, gTimer.GetTime(), frameTime);
 					}
 				}
 			}
 		}
 		
 
-		std::cout << "Delta Time: " << gTimer.GetDeltaTime() << std::endl;
+		std::cout << "Frame Time: " << frameTime << std::endl;
 
-		ControlCamera(myEngine, Camera);
+		ControlCamera(myEngine, Camera, frameTime);
 	}
 
 	// Delete the 3D engine now we are finished with it
@@ -220,7 +218,7 @@ void Init()
 		circle->Velocity = { 0.0f, 0.0f };
 		circle->Name = "Block: " + std::to_string(i);
 		circle->Colour = { 1, 0, 0 };
-		circle->Bounds = AABB(circle->Position, circle->Radius * 2);
+		circle->Bounds = QuadTree::AABB(circle->Position, circle->Radius * 2);
 
 
 		
@@ -236,7 +234,7 @@ void Init()
 		circle->Velocity = { randVel(mt), randVel(mt) };
 		circle->Name = "Moving: " + std::to_string(i);
 		circle->Colour = { 0, 0, 1 };
-		circle->Bounds = AABB(circle->Position, circle->Radius * 2);
+		circle->Bounds = QuadTree::AABB(circle->Position, circle->Radius * 2);
 		
 		MovingCircles.push_back(circle);
 		AllObjects.push_back(circle);
@@ -244,14 +242,13 @@ void Init()
 }
 
 
-void Move(Circle* circles, uint32_t numCircles)
+void Move(Circle* circles, uint32_t numCircles, float frameTime)
 {
 	auto circlesEnd = circles + numCircles;
 
 	while (circles != circlesEnd)
 	{
-		circles->Position += (SPEED * circles->Velocity) * gTimer.GetDeltaTime();
-		//circles->Bounds.Pos = circles->Position;
+		circles->Position += (SPEED * circles->Velocity) * frameTime;
 
 		if (circles->Position.x < -RANGE_POSITION || circles->Position.x > RANGE_POSITION)
 		{
@@ -282,9 +279,9 @@ void Move(Circle* circles, uint32_t numCircles)
 	}
 }
 
-void Move(Circle* circle)
+void Move(Circle* circle, float frameTime)
 {
-	circle->Position += (SPEED * circle->Velocity) * gTimer.GetDeltaTime();
+	circle->Position += (SPEED * circle->Velocity) * frameTime;
 
 
 	if (circle->Position.x < -RANGE_POSITION || circle->Position.x > RANGE_POSITION)
@@ -304,25 +301,25 @@ void Move(Circle* circle)
 }
 
 #ifdef Visual
-void ControlCamera(I3DEngine* engine, ICamera* camera)
+void ControlCamera(I3DEngine* engine, ICamera* camera, float frameTime)
 {
 
 
 	if (engine->KeyHeld(Key_W))
 	{
-		camera->MoveZ(CAM_SPEED * gTimer.GetDeltaTime());
+		camera->MoveZ(CAM_SPEED * frameTime);
 	}
 	if (engine->KeyHeld(Key_S))
 	{
-		camera->MoveZ(-CAM_SPEED * gTimer.GetDeltaTime());
+		camera->MoveZ(-CAM_SPEED * frameTime);
 	}
 	if (engine->KeyHeld(Key_A))
 	{
-		camera->MoveX(-CAM_SPEED * gTimer.GetDeltaTime());
+		camera->MoveX(-CAM_SPEED * frameTime);
 	}
 	if (engine->KeyHeld(Key_D))
 	{
-		camera->MoveX(CAM_SPEED * gTimer.GetDeltaTime());
+		camera->MoveX(CAM_SPEED * frameTime);
 	}
 }
 #endif

@@ -129,6 +129,7 @@ copy "D:\Software\Misc\TL-Engine\3rd Party\TL-Xtreme\shader\*.*" "$(OutDir)" &gt
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CVector2.cpp" />
     <ClCompile Include="CVector3.cpp" />
+    <ClCompile Include="Entity.cpp" />
     <ClCompile Include="QuadTree.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>

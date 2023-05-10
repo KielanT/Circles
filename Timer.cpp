@@ -1,99 +1,75 @@
+//--------------------------------------------------------------------------------------
+// Timer class - works like a stopwatch
+//--------------------------------------------------------------------------------------
+// Uses new std::chrono classes
+
 #include "Timer.h"
 
-#include <Windows.h>
 
-Timer::Timer() : m_SecondsPerCount(0.0), m_DeltaTime(-1.0), m_BaseTime(0), m_PausedTime(0),
-m_PreviousTime(0), m_CurrentTime(0), m_Stopped(false)
+/*-----------------------------------------------------------------------------------------
+	Constructor
+-----------------------------------------------------------------------------------------*/
+
+Timer::Timer()
 {
-    __int64 countsPerSeconds;
-    // Query Frequency of the performance counter
-    QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSeconds);
-    m_SecondsPerCount = 1.0 / (double)countsPerSeconds;
+	// Reset and start the timer
+	Reset();
+	mRunning = true;
 }
 
-float Timer::GetTime() const
-{
 
-    if (m_Stopped)
-    {
-        return (float)(((m_StopTime - m_PausedTime) - m_BaseTime) * m_SecondsPerCount);
-    }
-    else
-    {
-        return (float)(((m_CurrentTime - m_PausedTime) - m_BaseTime) * m_SecondsPerCount);
-    }
-}
+/*-----------------------------------------------------------------------------------------
+	Timer control
+-----------------------------------------------------------------------------------------*/
 
-float Timer::GetDeltaTime() const
-{
-    return (float)m_DeltaTime;
-}
-
-void Timer::Reset()
-{
-    __int64 currentTime;
-    QueryPerformanceCounter((LARGE_INTEGER*)&currentTime);
-
-    m_BaseTime = currentTime;
-    m_PreviousTime = currentTime;
-    m_StopTime = 0;
-    m_Stopped = false;
-
-}
-
+// Start the timer running
 void Timer::Start()
 {
-    if (m_Stopped)
-    {
-        __int64 startTime;
-        QueryPerformanceCounter((LARGE_INTEGER*)&startTime);
-
-        m_PausedTime += (startTime - m_StopTime);
-
-        m_PreviousTime = startTime;
-        m_StopTime = 0;
-        m_Stopped = false;
-    }
+	if (!mRunning)
+	{
+		// Account for downtime while stopped - add time passed since stop time to the start and lap times
+		auto now = mClock.now();
+		mStart += now - mStop;
+		mLap += now - mStop;
+		mRunning = true;
+	}
 }
 
+// Stop the timer running
 void Timer::Stop()
 {
-    // Don't do anything if already stopped
-    if (!m_Stopped)
-    {
-        __int64 currentTime;
-        QueryPerformanceCounter((LARGE_INTEGER*)&currentTime);
-
-        // Note the stop time
-        m_StopTime = currentTime;
-
-        m_Stopped = true;
-    }
+	if (mRunning)
+	{
+		mStop = mClock.now();
+		mRunning = false;
+	}
 }
 
-void Timer::Tick()
+// Reset the timer to zero
+void Timer::Reset()
 {
-    if (m_Stopped)
-    {
-        m_DeltaTime = 0.0;
-        return;
-    }
-
-    // Current time of this frame
-    __int64 currentTime;
-    QueryPerformanceCounter((LARGE_INTEGER*)&currentTime);
-    m_CurrentTime = currentTime;
-
-    // Delta time is the diference in time between previous frame and current frame
-    m_DeltaTime = (m_CurrentTime - m_PreviousTime) * m_SecondsPerCount;
-
-    // Set previous time for next frame
-    m_PreviousTime = m_CurrentTime;
+	mStart = mLap = mStop = mClock.now();
+}
 
 
-    // Stops the delta time from going negative
-    // When the computer goes into power save mode or it gets shuffled 
-    // to another processor then the delta time can become negative
-    if (m_DeltaTime < 0.0)
-        m_DeltaTime = 0.0;
+/*-----------------------------------------------------------------------------------------
+	Timing
+-----------------------------------------------------------------------------------------*/
+
+// Get time passed (seconds) since since timer was started or last reset
+float Timer::GetTime()
+{
+	Clock::time_point lastRunningTime = mRunning ? mClock.now() : mStop;
+	std::chrono::duration<float> timePassed = lastRunningTime - mStart;
+	return timePassed.count();
+}
+
+// Get time passed (seconds) since last call to this function. If this is the first call, then
+// the time since timer was started or the last reset is returned
+float Timer::GetLapTime()
+{
+	Clock::time_point lastRunningTime = mRunning ? mClock.now() : mStop;
+	std::chrono::duration<float> timePassed = lastRunningTime - mLap;
+	mLap = lastRunningTime;
+	return timePassed.count();
 }

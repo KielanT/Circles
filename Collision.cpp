@@ -70,7 +70,7 @@ void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint
 	}
 }
 
-void Collision::CircleToCirlce(Circle* circle, Circle* other, float time)
+void Collision::CircleToCirlce(Circle* circle, Circle* other, float time, float DeltaTime)
 {
 	const float distance = sqrt((circle->Position.x - other->Position.x) * (circle->Position.x - other->Position.x) +
 								(circle->Position.y - other->Position.y) * (circle->Position.y - other->Position.y));
@@ -89,6 +89,8 @@ void Collision::CircleToCirlce(Circle* circle, Circle* other, float time)
 		std::cout << "Time of collision: " << time << " seconds since start of program" << std::endl;
 		std::cout << circle->Name << " HP:" << std::to_string(circle->HP) << std::endl;
 		std::cout << other->Name << " HP:" << std::to_string(other->HP) << std::endl;
+		std::cout << std::endl;
+		std::cout << "Frame Time: " << DeltaTime << std::endl;
 		std::cout << std::endl;
 	}
 }
