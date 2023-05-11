@@ -1,5 +1,6 @@
-#include "Collision.h"
 #include <mutex>
+#include "Collision.h"
+#include "Globals.h"
 
 
 
@@ -86,6 +87,8 @@ void Collision::CircleToCirlce(Circle* circle, Circle* other, float time, float 
 		
 		circle->HP -= 20;
 		other->HP -= 20;
+
+		
 	
 		std::unique_lock<std::mutex> lock(coutMutex);
 		{
@@ -99,6 +102,23 @@ void Collision::CircleToCirlce(Circle* circle, Circle* other, float time, float 
 			std::cout << "Frame Time: " << DeltaTime << std::endl;
 			std::cout << std::endl;
 		}
+
+#ifdef DESTROY
+		if (circle->HP <= 0)
+		{
+			delete gModelsMap[circle->Name];
+			gModelsMap.erase(circle->Name);
+			circle = nullptr;
+		}
+		if (other->HP <= 0)
+		{
+			delete gModelsMap[other->Name];
+			gModelsMap.erase(other->Name);
+			other = nullptr;
+		}
+#endif 
+
+		
 	}
 }
 
@@ -118,7 +138,6 @@ void Collision::SphereToSphere(Sphere* circle, Sphere* other, float time, float 
 
 		circle->HP -= 20;
 		other->HP -= 20;
-
 		std::unique_lock<std::mutex> lock(coutMutex);
 		{
 			std::cout << std::endl;
@@ -131,5 +150,20 @@ void Collision::SphereToSphere(Sphere* circle, Sphere* other, float time, float 
 			std::cout << "Frame Time: " << DeltaTime << std::endl;
 			std::cout << std::endl;
 		}
+
+#ifdef DESTROY
+		if (circle->HP <= 0)
+		{
+			delete gModelsMap[circle->Name];
+			gModelsMap.erase(circle->Name);
+			circle = nullptr;
+		}
+		if (other->HP <= 0)
+		{
+			delete gModelsMap[other->Name];
+			gModelsMap.erase(other->Name);
+			other = nullptr;
+		}
+#endif 
 	}
 }

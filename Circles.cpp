@@ -23,13 +23,14 @@ using namespace tle;
 #endif // OCTREE
 
 #include <iostream>
-#include <vector>
 #include <map>
+
 
 #include "Timer.h"
 #include "Entity.h"
 #include "Collision.h"
 #include "Movement.h"
+#include "Globals.h"
 
 
 const uint32_t NUM_CIRCLES = 100;
@@ -44,7 +45,7 @@ const float SCALE_FACTOR = 5.0f;
 const float CAM_SPEED = 500.0f;
 
 #ifdef VISUAL
-std::map<std::string, IModel*> ModelsMap;
+std::map<std::string, IModel*> gModelsMap;
 #endif 
 
 #ifdef QUADTREE
@@ -97,7 +98,7 @@ void main()
 	{
 		IModel* Model = SphereMesh->CreateModel(object->Position.x, object->Position.y, 0);
 		Model->Scale(object->Radius / SCALE_FACTOR);
-		ModelsMap[object->Name] = Model;
+		gModelsMap[object->Name] = Model;
 	
 		if (object->Colour == CVector3( 1, 0, 0 ))
 		{
@@ -120,7 +121,7 @@ void main()
 
 		myEngine->DrawScene();
 		
-		Movement::Move(*app.Objects.data(), ModelsMap, NUM_CIRCLES, SPEED, RANGE_POSITION, frameTime);
+		Movement::Move(*app.Objects.data(), gModelsMap, NUM_CIRCLES, SPEED, RANGE_POSITION, frameTime);
 		app.Loop(timer.GetTime(), frameTime);
 		
 

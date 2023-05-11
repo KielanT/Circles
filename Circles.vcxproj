@@ -145,6 +145,7 @@ copy "D:\Software\Misc\TL-Engine\3rd Party\TL-Xtreme\shader\*.*" "$(OutDir)" &gt
     <ClInclude Include="CVector2.h" />
     <ClInclude Include="CVector3.h" />
     <ClInclude Include="Entity.h" />
+    <ClInclude Include="Globals.h" />
     <ClInclude Include="MathHelpers.h" />
     <ClInclude Include="Movement.h" />
     <ClInclude Include="Octree.h" />
