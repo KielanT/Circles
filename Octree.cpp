@@ -3,6 +3,8 @@
 
 namespace Octree
 {
+	const int MAX_DEPTH = 50;
+
 	Node* BuildOctree(CVector3 centre, float halfWidth, int stopDepth)
 	{
 		if (stopDepth < 0) return nullptr;
@@ -59,7 +61,7 @@ namespace Octree
 
 	void TestCollisions(Node* tree, float time, float frameTime)
 	{
-		const int MAX_DEPTH = 50;
+		
 		static Node* ancestorStack[MAX_DEPTH];
 		static int depth = 0; 
 
@@ -83,5 +85,7 @@ namespace Octree
 
 		depth--;
 	}
-	
+
+
+
 }

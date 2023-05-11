@@ -1,9 +1,9 @@
 // Define used for switching between console and visualisation 
-#define CONSOLE
-//#define VISUAL 
+//#define CONSOLE
+#define VISUAL 
 
-#define OCTREE
-//#define QUADTREE
+//#define OCTREE
+#define QUADTREE
 
 
 
@@ -32,11 +32,11 @@ using namespace tle;
 #include "Movement.h"
 
 
-const uint32_t NUM_CIRCLES = 1000;
+const uint32_t NUM_CIRCLES = 100;
 const float RANGE_POSITION = 1000.0f; // "Wall" around the circles
 const float RANGE_VELOCITY = 5.0f;
 const float RADIUS = 5.0f;
-const float MAX_RADIUS = 5.0f;
+const float MAX_RADIUS = 20.0f;
 
 const float SPEED = 100.0f;
 const float SCALE_FACTOR = 5.0f;

@@ -51,6 +51,8 @@ void OctreeApp::Init(float rangePos, float velocity, float minRadius, float maxR
 void OctreeApp::Loop(float time, float frameTime)
 {
 	Octree::TestCollisions(m_Octree, time, frameTime);
+	
+	
 
 	std::cout << "FrameTime: " << frameTime << std::endl;
 }
