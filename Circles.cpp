@@ -18,8 +18,9 @@ using namespace tle;
 #include "ThreadHelper.h"
 #include "PoolAllocator.h"
 #include "QuadTree.h"
+#include "Octree.h"
 
-const uint32_t NUM_CIRCLES = 100;
+const uint32_t NUM_CIRCLES = 1000;
 const float RANGE_POSITION = 1000.0f; // "Wall" around the circles
 const float RANGE_VELOCITY = 5.0f;
 const float RADIUS = 5.0f;
@@ -35,6 +36,8 @@ std::vector<Circle*> AllObjects;
 
 
 QuadTree::QuadTree* quadTree = new QuadTree::QuadTree(QuadTree::AABB(CVector2(0.0f, 0.0f), RANGE_POSITION), 8);
+
+
 
 #ifdef Visual
 
@@ -145,6 +148,8 @@ void main()
 		}
 	
 		RunCollisionTheads(gTimer.GetTime(), frameTime);
+
+		std::cout << "Frame Time: " << frameTime << std::endl;
 
 		ControlCamera(myEngine, Camera, frameTime);
 	}

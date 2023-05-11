@@ -75,16 +75,18 @@ void Collision::CircleToCirlce(Circle* circle, Circle* other, float time, float 
 	const float distance = sqrt((circle->Position.x - other->Position.x) * (circle->Position.x - other->Position.x) +
 								(circle->Position.y - other->Position.y) * (circle->Position.y - other->Position.y));
 	static std::mutex coutMutex;
+	
+
 	if (distance < circle->Radius + other->Radius)
 	{
 		CVector2 normal = circle->Position - other->Position;
 		circle->Velocity = Reflect(circle->Velocity, Normalise(normal));
 		other->Velocity = Reflect(other->Velocity, Normalise(normal));
-
+	
 		
 		circle->HP -= 20;
 		other->HP -= 20;
-
+	
 		std::unique_lock<std::mutex> lock(coutMutex);
 		{
 			std::cout << std::endl;

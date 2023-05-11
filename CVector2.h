@@ -74,6 +74,8 @@ CVector2 operator* (const CVector2& v, const CVector2& w);
 CVector2 operator* (const CVector2& v, const float scalar);
 CVector2 operator* (const float scalar, const CVector2& v);
 
+CVector2 operator/ (const CVector2& v, const float scalar);
+
 /*-----------------------------------------------------------------------------------------
 Non-member functions
 -----------------------------------------------------------------------------------------*/
@@ -85,3 +87,5 @@ float Dot(const CVector2& v1, const CVector2& v2);
 CVector2 Normalise(const CVector2& v);
 
 CVector2 Reflect(const CVector2& toReflect, const CVector2& normal);
+
+float LengthSquare(const CVector2& vector);

@@ -75,6 +75,11 @@ CVector2 operator*(const float scalar, const CVector2& v)
     return CVector2{ v.x * scalar, v.y * scalar };
 }
 
+CVector2 operator/(const CVector2& v, const float scalar)
+{
+    return CVector2{ v.x / scalar, v.y / scalar };
+}
+
 
 
 /*-----------------------------------------------------------------------------------------
@@ -110,4 +115,9 @@ CVector2 Reflect(const CVector2& toReflect, const CVector2& normal)
     outVector = toReflect - (2 * Dot(toReflect, normal)) * normal;
 
     return outVector;
+}
+
+float LengthSquare(const CVector2& vector)
+{
+    return vector.x * vector.x + vector.y * vector.y;
 }
