@@ -2,8 +2,8 @@
 // Vector3 class (cut down version), to hold points and vectors
 //--------------------------------------------------------------------------------------
 
+#include <string>
 #include "CVector3.h"
-
 
 /*-----------------------------------------------------------------------------------------
     Operators
@@ -114,6 +114,11 @@ CVector3 Reflect(const CVector3& toReflect, const CVector3& normal)
     outVector = toReflect - (2 * Dot(toReflect, normal)) * normal;
 
     return outVector;
+}
+
+std::string ToString(const CVector3& v)
+{
+    return "( " + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + " )";
 }
 
 

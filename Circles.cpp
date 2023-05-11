@@ -1,6 +1,6 @@
 // Define used for switching between console and visualisation 
-#define Console
-//#define Visual
+//#define Console
+#define Visual
 
 #ifdef Visual
 #include <TL-Engine.h>	
@@ -126,6 +126,8 @@ void main()
 	for (const auto movingCircle : MovingCircles)
 	{
 		IModel* Model = SphereMesh->CreateModel(movingCircle->Position.x, movingCircle->Position.y, 0);
+		
+
 		Model->SetSkin("brick1.jpg");
 		MovingCirclesRendered[movingCircle->Name] = Model;
 	}
@@ -203,6 +205,7 @@ void Init()
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<float> randLoc(-RANGE_POSITION, RANGE_POSITION);
 	std::uniform_real_distribution<float> randVel(-RANGE_VELOCITY, RANGE_VELOCITY);
+	std::uniform_real_distribution<float> randRad(5, 20);
 
 
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)

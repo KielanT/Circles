@@ -92,6 +92,8 @@ CVector3 Normalise(const CVector3& v);
 
 CVector3 Reflect(const CVector3& toReflect, const CVector3& normal);
 
+std::string ToString(const CVector3& v);
+
 // Returns length of a vector
 float Length(const CVector3& v);
 
