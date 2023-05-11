@@ -52,6 +52,11 @@ CVector3& CVector3::operator*= (const float s)
     return *this;
 }
 
+bool CVector3::operator==(const CVector3& other)
+{
+    return (x == other.x) && (y == other.y) && (z == other.z);
+}
+
 
 // Vector-vector addition
 CVector3 operator+ (const CVector3& v, const CVector3& w)

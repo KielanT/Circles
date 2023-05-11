@@ -19,7 +19,7 @@ using namespace tle;
 #include "PoolAllocator.h"
 #include "QuadTree.h"
 
-const uint32_t NUM_CIRCLES = 1000;
+const uint32_t NUM_CIRCLES = 100;
 const float RANGE_POSITION = 1000.0f; // "Wall" around the circles
 const float RANGE_VELOCITY = 5.0f;
 const float RADIUS = 5.0f;
@@ -32,16 +32,13 @@ const float CAM_SPEED = 500.0f;
 
 PoolAllocator<Circle> CirclesPool{ NUM_CIRCLES };
 std::vector<Circle*> AllObjects;
-std::vector<Circle*> MovingCircles;
-std::vector<Circle*> BlockCircles;
+
 
 QuadTree::QuadTree* quadTree = new QuadTree::QuadTree(QuadTree::AABB(CVector2(0.0f, 0.0f), RANGE_POSITION), 8);
 
 #ifdef Visual
-	// Pool allocator requires a constructor but Imodel is an interface
-	//PoolAllocator<IModel> ModelPool{ NUM_CIRCLES };
-	std::vector<IModel*> BlockCirclesRendered;
-	std::map<std::string, IModel*> MovingCirclesRendered;
+
+	std::map<std::string, IModel*> RenderedCirclesMap;
 
 	void ControlCamera(I3DEngine* engine, ICamera* camera, float frameTime);
 #endif 
@@ -75,7 +72,7 @@ void main()
 		quadTree->Clear();
 
 
-		for (auto& allCircles : MovingCircles)
+		for (auto& allCircles : AllObjects)
 		{
 			Move(allCircles, frameTime);
 		}
@@ -87,25 +84,7 @@ void main()
 			quadTree->Insert(allCircles);
 		}
 
-		for (auto& allCircles : AllObjects)
-		{
-			QuadTree::AABB queryRange(allCircles->Position - CVector2(allCircles->Radius, allCircles->Radius), allCircles->Radius * 2.0f);
-
-			auto InRange = quadTree->QueryRange(queryRange);
-
-
-			for (auto& otherCircle : InRange)
-			{
-				if (allCircles != otherCircle)
-				{
-
-					if (QuadTree::Intersects(allCircles->Bounds, otherCircle->Bounds))
-					{
-						Collision::CircleToCirlce(allCircles, otherCircle, gTimer.GetTime(), frameTime);
-					}
-				}
-			}
-		}
+		RunCollisionTheads(gTimer.GetTime(), frameTime);
 
 		
 	}
@@ -125,26 +104,22 @@ void main()
 
 	IMesh* SphereMesh = myEngine->LoadMesh("Sphere.x");
 
-	
-
-	for (const auto movingCircle : MovingCircles)
+	for (const auto& circles : AllObjects)
 	{
-		IModel* Model = SphereMesh->CreateModel(movingCircle->Position.x, movingCircle->Position.y, 0);
-		
-		Model->Scale(movingCircle->Radius / SCALE_FACTOR);
-		Model->SetSkin("brick1.jpg");
-		MovingCirclesRendered[movingCircle->Name] = Model;
+		IModel* Model = SphereMesh->CreateModel(circles->Position.x, circles->Position.y, 0);
+		Model->Scale(circles->Radius / SCALE_FACTOR);
+		RenderedCirclesMap[circles->Name] = Model;
+
+		if (circles->Colour == CVector3( 1, 0, 0 ))
+		{
+			Model->SetSkin("brick1.jpg");
+		}
+		else
+		{
+			Model->SetSkin("CueMetal.jpg");
+			
+		}
 	}
-
-
-	for (const auto blockCircle : BlockCircles)
-	{
-		IModel* Model = SphereMesh->CreateModel(blockCircle->Position.x, blockCircle->Position.y, 0);
-		Model->Scale(blockCircle->Radius / SCALE_FACTOR);
-		Model->SetSkin("CueMetal.jpg");
-		BlockCirclesRendered.push_back(Model);
-	}
-
 
 
 	// The main game loop, repeat until engine is stopped
@@ -157,7 +132,7 @@ void main()
 		
 		
 
-		for (auto& allCircles : MovingCircles)
+		for (auto& allCircles : AllObjects)
 		{
 			Move(allCircles, frameTime);
 		}
@@ -216,9 +191,6 @@ void Init()
 		circle->Colour = { 1, 0, 0 };
 		circle->Bounds = QuadTree::AABB(circle->Position, circle->Radius * 2);
 
-
-		
-		BlockCircles.push_back(circle);
 		AllObjects.push_back(circle);
 	}
 
@@ -232,7 +204,6 @@ void Init()
 		circle->Colour = { 0, 0, 1 };
 		circle->Bounds = QuadTree::AABB(circle->Position, circle->Radius * 2);
 		
-		MovingCircles.push_back(circle);
 		AllObjects.push_back(circle);
 	}
 }
@@ -267,7 +238,7 @@ void Move(Circle* circles, uint32_t numCircles, float frameTime)
 		//	}
 		//
 		// A map is quicker than doing the above code
-		MovingCirclesRendered[circles->Name]->SetPosition(circles->Position.x, circles->Position.y, 0);
+		RenderedCirclesMap[circles->Name]->SetPosition(circles->Position.x, circles->Position.y, 0);
 
 #endif 
 
@@ -292,7 +263,7 @@ void Move(Circle* circle, float frameTime)
 
 #ifdef Visual
 
-	MovingCirclesRendered[circle->Name]->SetPosition(circle->Position.x, circle->Position.y, 0);
+	RenderedCirclesMap[circle->Name]->SetPosition(circle->Position.x, circle->Position.y, 0);
 #endif 
 }
 

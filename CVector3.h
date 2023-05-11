@@ -60,6 +60,8 @@ public:
 
     // Multiply vector by scalar (scales vector);
     CVector3& operator*= (const float s);
+
+    bool operator==(const CVector3& other);
 };
 	
 
@@ -76,6 +78,7 @@ CVector3 operator- (const CVector3& v, const CVector3& w);
 // Vector-scalar multiplication
 CVector3 operator* (const CVector3& v, float s);
 CVector3 operator* (float s, const CVector3& v);
+
 
 /*-----------------------------------------------------------------------------------------
     Non-member functions
