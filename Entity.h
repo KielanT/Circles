@@ -36,3 +36,16 @@ struct Circle
 
     Circle() = default;
 };
+
+struct Sphere
+{
+    CVector3 Position{ 0.0f, 0.0f, 0.0f };
+    CVector3 Velocity{ 0.0f, 0.0f, 0.0f };
+    CVector3 Colour{ 0.0f, 0.0f, 0.0f };
+    float Radius{ 1.0f };
+    int HP{ 100 };
+    std::string Name{ "" };
+    Sphere* NextCircle;
+
+    Sphere() = default;
+};

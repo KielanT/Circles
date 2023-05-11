@@ -1,22 +1,24 @@
 #pragma once
 #include "Entity.h"
-#include "CVector2.h"
+#include "CVector3.h"
+#include "ThreadHelper.h"
 
-struct Node
+namespace Octree
 {
-	CVector2 Centre;
-	float HalfWidth;
-	Node* Child[8];
-	Circle* CircleList = nullptr;
-};
 
-Node* BuildOctree(CVector2 centre, float halfWidth, int stopDepth)
-{
-	if (stopDepth > 0) return nullptr;
-	else
+	struct Node
 	{
-		Node* node = new Node();
-		node->Centre = centre;
-		node->HalfWidth = halfWidth;
-	}
+		CVector3 Centre;
+		float HalfWidth;
+		Node* Child[8];
+		Sphere* CircleList = nullptr;
+	};
+
+	Node* BuildOctree(CVector3 centre, float halfWidth, int stopDepth);
+
+	void InsertObject(Node* tree, Sphere* circle);
+	
+	void TestCollisions(Node* tree, float time, float frameTime);
+
+
 }

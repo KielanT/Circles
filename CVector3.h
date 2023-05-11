@@ -8,6 +8,7 @@
 
 #include "MathHelpers.h"
 #include <cmath>
+#include <string>
 
 class CVector3
 {
@@ -41,6 +42,17 @@ public:
         z = pfElts[2];
     }
 
+    float GetByIndex(int index)
+    {
+        if (index == 0)
+            return x;
+        else if (index == 1)
+            return y;
+        else if (index == 2)
+            return z;
+        else
+            return 0.0f;
+    }
 
     /*-----------------------------------------------------------------------------------------
         Member functions
