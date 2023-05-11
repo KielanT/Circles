@@ -1,11 +1,29 @@
 #pragma once
+#include <vector>
+
+#include "Octree.h"
+#include "PoolAllocator.h"
+
 class OctreeApp
 {
 public:
-	Init();
+	OctreeApp(uint32_t poolSize) : m_Pool(poolSize) {}
 
-	Loop();
+	~OctreeApp();
 
-	Move(float time, float frameTime);
+
+	void Init(float rangePos, float velocity, float minRadius, float maxRadius, int numCircles);
+
+	void Loop(float time, float frameTime);
+
+	void Shutdown();
+
+	std::vector<Sphere*> Objects;
+
+
+private:
+	Octree::Node* m_Octree = nullptr;
+	
+	PoolAllocator<Sphere> m_Pool;
 };
 

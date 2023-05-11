@@ -8,6 +8,7 @@
 
 #include "MathHelpers.h"
 #include <cmath>
+#include <string>
 
 class CVector3
 {
