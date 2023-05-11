@@ -1,10 +1,11 @@
 #include "Octree.h"
+#include "Collision.h"
 
 namespace Octree
 {
 	Node* BuildOctree(CVector3 centre, float halfWidth, int stopDepth)
 	{
-		if (stopDepth > 0) return nullptr;
+		if (stopDepth < 0) return nullptr;
 		else
 		{
 			Node* node = new Node();
@@ -56,11 +57,11 @@ namespace Octree
 
 	}
 
-	void TestCollisions(Node* tree)
+	void TestCollisions(Node* tree, float time, float frameTime)
 	{
-		const int MAX_DEPTH = 40;
+		const int MAX_DEPTH = 50;
 		static Node* ancestorStack[MAX_DEPTH];
-		static int depth = 0; // ’Depth == 0’ is invariant over calls
+		static int depth = 0; 
 
 		ancestorStack[depth++] = tree;
 		for (int n = 0; n < depth; n++)
@@ -70,18 +71,16 @@ namespace Octree
 			{
 				for (pB = tree->CircleList; pB; pB = pB->NextCircle)
 				{
-					// Avoid testing both A->B and B->A
 					if (pA == pB) break;
-					// Now perform the collision test between pA and pB in some manner
-					TestCollision(pA, pB);
+					Collision::SphereToSphere(pA, pB, time, frameTime);
 				}
 			}
 		}
-		// Recursively visit all existing children
+
 		for (int i = 0; i < 8; i++)
 			if (tree->Child[i])
-				TestCollisions(tree->Child[i]);
-		// Remove current node from ancestor stack before returning
+				TestCollisions(tree->Child[i], time, frameTime);
+
 		depth--;
 	}
 	

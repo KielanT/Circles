@@ -1,6 +1,7 @@
 // Define used for switching between console and visualisation 
 //#define Console
-#define Visual
+#define Visual 
+
 
 #ifdef Visual
 #include <TL-Engine.h>	
@@ -20,22 +21,26 @@ using namespace tle;
 #include "QuadTree.h"
 #include "Octree.h"
 
-const uint32_t NUM_CIRCLES = 1000;
+const uint32_t NUM_CIRCLES = 100;
 const float RANGE_POSITION = 1000.0f; // "Wall" around the circles
 const float RANGE_VELOCITY = 5.0f;
 const float RADIUS = 5.0f;
-const float MAX_RADIUS = 20.0f;
+const float MAX_RADIUS = 5.0f;
 
 const float SPEED = 100.0f;
 const float SCALE_FACTOR = 5.0f;
 
 const float CAM_SPEED = 500.0f;
 
-PoolAllocator<Circle> CirclesPool{ NUM_CIRCLES };
-std::vector<Circle*> AllObjects;
+PoolAllocator<Sphere> CirclesPool{ NUM_CIRCLES };
+std::vector<Sphere*> AllObjects;
+
+//QuadTree::QuadTree* quadTree = new QuadTree::QuadTree(QuadTree::AABB(CVector2(0.0f, 0.0f), RANGE_POSITION), 8);
 
 
-QuadTree::QuadTree* quadTree = new QuadTree::QuadTree(QuadTree::AABB(CVector2(0.0f, 0.0f), RANGE_POSITION), 8);
+Octree::Node* gOctree = Octree::BuildOctree(CVector3(0.0f, 0.0f, 0.0f), RANGE_POSITION, 5);
+
+
 
 
 
@@ -52,19 +57,20 @@ std::pair <WorkerThread, CollisionWork> gCollisionWorkers[MAX_WORKERS];
 uint32_t NumWorkers;
 
 void Init();
-void Move(Circle* circles, uint32_t numCircles, float frameTime);
-void Move(Circle* circles, float frameTime);
+void Move(Sphere* circles, uint32_t numCircles, float frameTime);
+void Move(Sphere* circles, float frameTime);
+void Loop(float time, float frameTime);
 void CollisionThread(uint32_t thread);
 void RunCollisionTheads(float time, float frameTime);
-void QuadTreeCollisionQuery(QuadTree::QuadTree* tree, Circle* allCircles, uint32_t numCircles, float time, float frameTime);
+void QuadTreeCollisionQuery(QuadTree::QuadTree* tree, Sphere* allCircles, uint32_t numCircles, float time, float frameTime);
 
 
 void main()
 {
 	Init();
 
-	Timer gTimer;
-	gTimer.Start();
+	Timer timer;
+	timer.Start();
 
 #ifdef Console
 
@@ -125,31 +131,18 @@ void main()
 	}
 
 
+
 	// The main game loop, repeat until engine is stopped
 	while (myEngine->IsRunning())
 	{
 		// Draw the scene
-		float frameTime = gTimer.GetLapTime();
+		float frameTime = timer.GetLapTime();
 
 		myEngine->DrawScene();
 		
 		
-
-		for (auto& allCircles : AllObjects)
-		{
-			Move(allCircles, frameTime);
-		}
-
-		quadTree->Clear();
-		for (auto& allCircles : AllObjects)
-		{
-			allCircles->Bounds.Centre = allCircles->Position;
-			quadTree->Insert(allCircles);
-		}
-	
-		RunCollisionTheads(gTimer.GetTime(), frameTime);
-
-		std::cout << "Frame Time: " << frameTime << std::endl;
+		Loop(timer.GetTime(), frameTime);
+		
 
 		ControlCamera(myEngine, Camera, frameTime);
 	}
@@ -158,7 +151,7 @@ void main()
 	myEngine->Delete();
 #endif
 
-	if (quadTree != nullptr) delete quadTree;
+	//if (quadTree != nullptr) delete quadTree;
 
 	for (uint32_t i = 0; i < NumWorkers; ++i)
 	{
@@ -189,12 +182,12 @@ void Init()
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
 		auto circle = CirclesPool.Get();
-		circle->Position = { randLoc(mt), randLoc(mt) };
+		circle->Position = { randLoc(mt), randLoc(mt), 0.0f };
 		circle->Radius = randRad(mt);
-		circle->Velocity = { 0.0f, 0.0f };
+		circle->Velocity = { 0.0f, 0.0f, 0.0f };
 		circle->Name = "Block: " + std::to_string(i);
 		circle->Colour = { 1, 0, 0 };
-		circle->Bounds = QuadTree::AABB(circle->Position, circle->Radius * 2);
+		//circle->Bounds = QuadTree::AABB(circle->Position, circle->Radius * 2);
 
 		AllObjects.push_back(circle);
 	}
@@ -202,19 +195,24 @@ void Init()
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
 		auto circle = CirclesPool.Get();
-		circle->Position = { randLoc(mt), randLoc(mt) };
+		circle->Position = { randLoc(mt), randLoc(mt), 0.0f };
 		circle->Radius = randRad(mt);
-		circle->Velocity = { randVel(mt), randVel(mt) };
+		circle->Velocity = { randVel(mt), randVel(mt), 0.0f };
 		circle->Name = "Moving: " + std::to_string(i);
 		circle->Colour = { 0, 0, 1 };
-		circle->Bounds = QuadTree::AABB(circle->Position, circle->Radius * 2);
+		//circle->Bounds = QuadTree::AABB(circle->Position, circle->Radius * 2);
 		
 		AllObjects.push_back(circle);
+	}
+
+	for (auto& allCircles : AllObjects)
+	{
+		Octree::InsertObject(gOctree, allCircles);
 	}
 }
 
 
-void Move(Circle* circles, uint32_t numCircles, float frameTime)
+void Move(Sphere* circles, uint32_t numCircles, float frameTime)
 {
 	auto circlesEnd = circles + numCircles;
 
@@ -251,7 +249,7 @@ void Move(Circle* circles, uint32_t numCircles, float frameTime)
 	}
 }
 
-void Move(Circle* circle, float frameTime)
+void Move(Sphere* circle, float frameTime)
 {
 	circle->Position += (SPEED * circle->Velocity) * frameTime;
 
@@ -272,9 +270,22 @@ void Move(Circle* circle, float frameTime)
 #endif 
 }
 
+void Loop(float time, float frameTime)
+{
+	for (auto& allCircles : AllObjects)
+	{
+		Move(allCircles, frameTime);
+	}
+
+
+	Octree::TestCollisions(gOctree, time, frameTime);
+
+	std::cout << "Frame Time: " << frameTime << std::endl;
+}
+
 void CollisionThread(uint32_t thread)
 {
-	auto& worker = gCollisionWorkers[thread].first;
+	/*auto& worker = gCollisionWorkers[thread].first;
 	auto& work = gCollisionWorkers[thread].second;
 	while (true)
 	{
@@ -290,51 +301,51 @@ void CollisionThread(uint32_t thread)
 			work.Complete = true;
 			worker.WorkReady.notify_one();
 		}
-	}
+	}*/
 }
 
 void RunCollisionTheads(float time, float frameTime)
 {
-	auto AllCircles = AllObjects.data();
-	for (uint32_t i = 0; i < NumWorkers; ++i)
-	{
-		auto& work = gCollisionWorkers[i].second;
-		work.AllCircles = *AllCircles;
-		work.NumCircles = NUM_CIRCLES / (NumWorkers + 1);
-		work.Tree = quadTree;
-		work.Time = time;
-		work.FrameTime = frameTime;
+	//auto AllCircles = AllObjects.data();
+	//for (uint32_t i = 0; i < NumWorkers; ++i)
+	//{
+	//	auto& work = gCollisionWorkers[i].second;
+	//	work.AllCircles = *AllCircles;
+	//	work.NumCircles = NUM_CIRCLES / (NumWorkers + 1);
+	//	work.Tree = quadTree;
+	//	work.Time = time;
+	//	work.FrameTime = frameTime;
 
-		auto& workerThread = gCollisionWorkers[i].first;
-		{
-			std::unique_lock<std::mutex> l(workerThread.Lock);
-			work.Complete = false;
-		}
+	//	auto& workerThread = gCollisionWorkers[i].first;
+	//	{
+	//		std::unique_lock<std::mutex> l(workerThread.Lock);
+	//		work.Complete = false;
+	//	}
 
-		workerThread.WorkReady.notify_one();
+	//	workerThread.WorkReady.notify_one();
 
-		AllCircles += work.NumCircles;
-	}
+	//	AllCircles += work.NumCircles;
+	//}
 
-	// Do collision for the remaining circles
-	uint32_t numRemainingCircles = NUM_CIRCLES  - static_cast<uint32_t>(AllCircles - AllObjects.data());
-	QuadTreeCollisionQuery(quadTree, *AllCircles, numRemainingCircles, time, frameTime);
+	//// Do collision for the remaining circles
+	//uint32_t numRemainingCircles = NUM_CIRCLES  - static_cast<uint32_t>(AllCircles - AllObjects.data());
+	//QuadTreeCollisionQuery(quadTree, *AllCircles, numRemainingCircles, time, frameTime);
 
 
-	for (uint32_t i = 0; i < NumWorkers; ++i)
-	{
-		auto& workerThread = gCollisionWorkers[i].first;
-		auto& work = gCollisionWorkers[i].second;
+	//for (uint32_t i = 0; i < NumWorkers; ++i)
+	//{
+	//	auto& workerThread = gCollisionWorkers[i].first;
+	//	auto& work = gCollisionWorkers[i].second;
 
-		std::unique_lock<std::mutex> l(workerThread.Lock);
-		workerThread.WorkReady.wait(l, [&]() { return work.Complete; });
-	}
+	//	std::unique_lock<std::mutex> l(workerThread.Lock);
+	//	workerThread.WorkReady.wait(l, [&]() { return work.Complete; });
+	//}
 }
 
-void QuadTreeCollisionQuery(QuadTree::QuadTree* tree, Circle* allCircles, uint32_t numCircles, float time, float frameTime)
+void QuadTreeCollisionQuery(QuadTree::QuadTree* tree, Sphere* allCircles, uint32_t numCircles, float time, float frameTime)
 {
 
-	auto criclesEnd = allCircles + numCircles;
+	/*auto criclesEnd = allCircles + numCircles;
 	while (allCircles != criclesEnd)
 	{
 		QuadTree::AABB queryRange(allCircles->Position - CVector2(allCircles->Radius, allCircles->Radius), allCircles->Radius * 2.0f);
@@ -354,7 +365,7 @@ void QuadTreeCollisionQuery(QuadTree::QuadTree* tree, Circle* allCircles, uint32
 		}
 
 		++allCircles;
-	}
+	}*/
 }
 
 

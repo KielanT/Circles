@@ -10,4 +10,6 @@ namespace Collision
 	void SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint32_t numBlockCircles, float time, float deltaTime);
 
 	void CircleToCirlce(Circle* circle, Circle* other, float time, float deltaTime);
+
+	void SphereToSphere(Sphere* circle, Sphere* other, float time, float DeltaTime);
 }

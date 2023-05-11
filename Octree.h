@@ -17,5 +17,5 @@ namespace Octree
 
 	void InsertObject(Node* tree, Sphere* circle);
 
-	void TestCollisions(Node* tree);
+	void TestCollisions(Node* tree, float time, float frameTime);
 }
