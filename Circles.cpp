@@ -1,6 +1,6 @@
 // Define used for switching between console and visualisation 
-//#define CONSOLE
-#define VISUAL 
+#define CONSOLE
+//#define VISUAL 
 
 #define OCTREE
 //#define QUADTREE
@@ -29,12 +29,10 @@ using namespace tle;
 #include "Timer.h"
 #include "Entity.h"
 #include "Collision.h"
-#include "ThreadHelper.h"
-#include "PoolAllocator.h"
 #include "Movement.h"
 
 
-const uint32_t NUM_CIRCLES = 100;
+const uint32_t NUM_CIRCLES = 1000;
 const float RANGE_POSITION = 1000.0f; // "Wall" around the circles
 const float RANGE_VELOCITY = 5.0f;
 const float RADIUS = 5.0f;
@@ -50,7 +48,7 @@ std::map<std::string, IModel*> ModelsMap;
 #endif 
 
 #ifdef QUADTREE
-QuadTreeApp app;
+QuadTreeApp app(NUM_CIRCLES);
 #endif // QUADTREE
 
 #ifdef OCTREE
@@ -77,7 +75,7 @@ void main()
 		
 		Movement::Move(*app.Objects.data(), NUM_CIRCLES, SPEED, RANGE_POSITION, frameTime);
 		
-		app.Loop(frameTime);
+		app.Loop(timer.GetTime(), frameTime);
 	}
 #endif
 
@@ -132,7 +130,7 @@ void main()
 	// Delete the 3D engine now we are finished with it
 	myEngine->Delete();
 #endif
-
+	app.Shutdown();
 }
 
 
