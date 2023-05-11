@@ -19,11 +19,14 @@ using namespace tle;
 #include "PoolAllocator.h"
 #include "QuadTree.h"
 
-const int NUM_CIRCLES = 1000;
-const float RANGE_POSITION = 1000.0f;
+const uint32_t NUM_CIRCLES = 1000;
+const float RANGE_POSITION = 1000.0f; // "Wall" around the circles
 const float RANGE_VELOCITY = 5.0f;
-const float RADIUS = 10.0f;
+const float RADIUS = 5.0f;
+const float MAX_RADIUS = 20.0f;
+
 const float SPEED = 100.0f;
+const float SCALE_FACTOR = 5.0f;
 
 const float CAM_SPEED = 500.0f;
 
@@ -43,14 +46,17 @@ QuadTree::QuadTree* quadTree = new QuadTree::QuadTree(QuadTree::AABB(CVector2(0.
 	void ControlCamera(I3DEngine* engine, ICamera* camera, float frameTime);
 #endif 
 
-
-
-
+// Threads
+const uint32_t MAX_WORKERS = 31;
+std::pair <WorkerThread, CollisionWork> gCollisionWorkers[MAX_WORKERS];
+uint32_t NumWorkers;
 
 void Init();
 void Move(Circle* circles, uint32_t numCircles, float frameTime);
 void Move(Circle* circles, float frameTime);
-
+void CollisionThread(uint32_t thread);
+void RunCollisionTheads(float time, float frameTime);
+void QuadTreeCollisionQuery(QuadTree::QuadTree* tree, Circle* allCircles, uint32_t numCircles, float time, float frameTime);
 
 
 void main()
@@ -101,8 +107,6 @@ void main()
 			}
 		}
 
-
-		std::cout << "Frame Time: " << frameTime << std::endl;
 		
 	}
 #endif
@@ -127,7 +131,7 @@ void main()
 	{
 		IModel* Model = SphereMesh->CreateModel(movingCircle->Position.x, movingCircle->Position.y, 0);
 		
-
+		Model->Scale(movingCircle->Radius / SCALE_FACTOR);
 		Model->SetSkin("brick1.jpg");
 		MovingCirclesRendered[movingCircle->Name] = Model;
 	}
@@ -136,6 +140,7 @@ void main()
 	for (const auto blockCircle : BlockCircles)
 	{
 		IModel* Model = SphereMesh->CreateModel(blockCircle->Position.x, blockCircle->Position.y, 0);
+		Model->Scale(blockCircle->Radius / SCALE_FACTOR);
 		Model->SetSkin("CueMetal.jpg");
 		BlockCirclesRendered.push_back(Model);
 	}
@@ -163,29 +168,8 @@ void main()
 			allCircles->Bounds.Centre = allCircles->Position;
 			quadTree->Insert(allCircles);
 		}
-
-		for (auto& allCircles : AllObjects)
-		{
-			QuadTree::AABB queryRange(allCircles->Position - CVector2(allCircles->Radius, allCircles->Radius), allCircles->Radius * 2.0f);
-
-			auto InRange = quadTree->QueryRange(queryRange);
-
-
-			for (auto& otherCircle : InRange)
-			{
-				if (allCircles != otherCircle) 
-				{
-					
-					if (QuadTree::Intersects(allCircles->Bounds, otherCircle->Bounds))
-					{
-						Collision::CircleToCirlce(allCircles, otherCircle, gTimer.GetTime(), frameTime);
-					}
-				}
-			}
-		}
-		
-
-		std::cout << "Frame Time: " << frameTime << std::endl;
+	
+		RunCollisionTheads(gTimer.GetTime(), frameTime);
 
 		ControlCamera(myEngine, Camera, frameTime);
 	}
@@ -196,23 +180,37 @@ void main()
 
 	if (quadTree != nullptr) delete quadTree;
 
+	for (uint32_t i = 0; i < NumWorkers; ++i)
+	{
+		gCollisionWorkers[i].first.Thread.detach();
+	}
 }
 
 void Init()
 {
+	NumWorkers = std::thread::hardware_concurrency(); // Gets the amount of threads the system has (is only a hint may not work)
+	if (NumWorkers == 0) NumWorkers = 8; // If there wasn't any hints force threads count to be 8
+	NumWorkers -= 1; // Removes 1 worker since the main thread is already running
+
+	// Start the collision threads
+	for (uint32_t i = 0; i < NumWorkers; ++i)
+	{
+		gCollisionWorkers[i].first.Thread = std::thread(&CollisionThread, i);
+	}
+
 
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<float> randLoc(-RANGE_POSITION, RANGE_POSITION);
 	std::uniform_real_distribution<float> randVel(-RANGE_VELOCITY, RANGE_VELOCITY);
-	std::uniform_real_distribution<float> randRad(5, 20);
+	std::uniform_real_distribution<float> randRad(RADIUS, MAX_RADIUS);
 
 
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
 		auto circle = CirclesPool.Get();
 		circle->Position = { randLoc(mt), randLoc(mt) };
-		circle->Radius = RADIUS;
+		circle->Radius = randRad(mt);
 		circle->Velocity = { 0.0f, 0.0f };
 		circle->Name = "Block: " + std::to_string(i);
 		circle->Colour = { 1, 0, 0 };
@@ -228,7 +226,7 @@ void Init()
 	{
 		auto circle = CirclesPool.Get();
 		circle->Position = { randLoc(mt), randLoc(mt) };
-		circle->Radius = RADIUS;
+		circle->Radius = randRad(mt);
 		circle->Velocity = { randVel(mt), randVel(mt) };
 		circle->Name = "Moving: " + std::to_string(i);
 		circle->Colour = { 0, 0, 1 };
@@ -297,6 +295,92 @@ void Move(Circle* circle, float frameTime)
 	MovingCirclesRendered[circle->Name]->SetPosition(circle->Position.x, circle->Position.y, 0);
 #endif 
 }
+
+void CollisionThread(uint32_t thread)
+{
+	auto& worker = gCollisionWorkers[thread].first;
+	auto& work = gCollisionWorkers[thread].second;
+	while (true)
+	{
+		{
+			std::unique_lock<std::mutex> l(worker.Lock);
+			worker.WorkReady.wait(l, [&]() { return !work.Complete; });
+		}
+
+		QuadTreeCollisionQuery(work.Tree, work.AllCircles, work.NumCircles, work.Time, work.FrameTime);
+
+		{
+			std::unique_lock<std::mutex> l(worker.Lock);
+			work.Complete = true;
+			worker.WorkReady.notify_one();
+		}
+	}
+}
+
+void RunCollisionTheads(float time, float frameTime)
+{
+	auto AllCircles = AllObjects.data();
+	for (uint32_t i = 0; i < NumWorkers; ++i)
+	{
+		auto& work = gCollisionWorkers[i].second;
+		work.AllCircles = *AllCircles;
+		work.NumCircles = NUM_CIRCLES / (NumWorkers + 1);
+		work.Tree = quadTree;
+		work.Time = time;
+		work.FrameTime = frameTime;
+
+		auto& workerThread = gCollisionWorkers[i].first;
+		{
+			std::unique_lock<std::mutex> l(workerThread.Lock);
+			work.Complete = false;
+		}
+
+		workerThread.WorkReady.notify_one();
+
+		AllCircles += work.NumCircles;
+	}
+
+	// Do collision for the remaining circles
+	uint32_t numRemainingCircles = NUM_CIRCLES  - static_cast<uint32_t>(AllCircles - AllObjects.data());
+	QuadTreeCollisionQuery(quadTree, *AllCircles, numRemainingCircles, time, frameTime);
+
+
+	for (uint32_t i = 0; i < NumWorkers; ++i)
+	{
+		auto& workerThread = gCollisionWorkers[i].first;
+		auto& work = gCollisionWorkers[i].second;
+
+		std::unique_lock<std::mutex> l(workerThread.Lock);
+		workerThread.WorkReady.wait(l, [&]() { return work.Complete; });
+	}
+}
+
+void QuadTreeCollisionQuery(QuadTree::QuadTree* tree, Circle* allCircles, uint32_t numCircles, float time, float frameTime)
+{
+
+	auto criclesEnd = allCircles + numCircles;
+	while (allCircles != criclesEnd)
+	{
+		QuadTree::AABB queryRange(allCircles->Position - CVector2(allCircles->Radius, allCircles->Radius), allCircles->Radius * 2.0f);
+
+		auto InRange = tree->QueryRange(queryRange);
+
+		for (auto& otherCircle : InRange)
+		{
+			if (allCircles != otherCircle)
+			{
+
+				if (QuadTree::Intersects(allCircles->Bounds, otherCircle->Bounds))
+				{
+					Collision::CircleToCirlce(allCircles, otherCircle, time, frameTime);
+				}
+			}
+		}
+
+		++allCircles;
+	}
+}
+
 
 #ifdef Visual
 void ControlCamera(I3DEngine* engine, ICamera* camera, float frameTime)

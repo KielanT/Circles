@@ -74,7 +74,7 @@ void Collision::CircleToCirlce(Circle* circle, Circle* other, float time, float 
 {
 	const float distance = sqrt((circle->Position.x - other->Position.x) * (circle->Position.x - other->Position.x) +
 								(circle->Position.y - other->Position.y) * (circle->Position.y - other->Position.y));
-
+	static std::mutex coutMutex;
 	if (distance < circle->Radius + other->Radius)
 	{
 		CVector2 normal = circle->Position - other->Position;
@@ -85,15 +85,18 @@ void Collision::CircleToCirlce(Circle* circle, Circle* other, float time, float 
 		circle->HP -= 20;
 		other->HP -= 20;
 
-		std::cout << std::endl;
-		std::cout << "Collision Between: " << circle->Name << " and " << other->Name << std::endl;
-		std::cout << circle->Name << ": " << ToString(circle->Colour) << other->Name << ": " << ToString(other->Colour) << std::endl;
-		std::cout << "Time of collision: " << time << " seconds since start of program" << std::endl;
-		std::cout << circle->Name << " HP:" << std::to_string(circle->HP) << std::endl;
-		std::cout << other->Name << " HP:" << std::to_string(other->HP) << std::endl;
-		std::cout << std::endl;
-		std::cout << "Frame Time: " << DeltaTime << std::endl;
-		std::cout << std::endl;
+		std::unique_lock<std::mutex> lock(coutMutex);
+		{
+			std::cout << std::endl;
+			std::cout << "Collision Between: " << circle->Name << " and " << other->Name << std::endl;
+			std::cout << circle->Name << ": " << ToString(circle->Colour) << other->Name << ": " << ToString(other->Colour) << std::endl;
+			std::cout << "Time of collision: " << time << " seconds since start of program" << std::endl;
+			std::cout << circle->Name << " HP:" << std::to_string(circle->HP) << std::endl;
+			std::cout << other->Name << " HP:" << std::to_string(other->HP) << std::endl;
+			std::cout << std::endl;
+			std::cout << "Frame Time: " << DeltaTime << std::endl;
+			std::cout << std::endl;
+		}
 	}
 }
 

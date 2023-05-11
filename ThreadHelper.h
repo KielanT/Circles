@@ -3,6 +3,7 @@
 #include <condition_variable>
 
 #include "Entity.h"
+#include "QuadTree.h"
 
 struct WorkerThread
 {
@@ -14,16 +15,10 @@ struct WorkerThread
 struct CollisionWork
 {
 	bool Complete = true;
-	Circle* MovingCircles;
-	Circle* BlockingCircles;
-	uint32_t NumMovingCircles;
-	uint32_t NumBlockCircles;
+	Circle* AllCircles;
+	uint32_t NumCircles;
+	QuadTree::QuadTree* Tree;
 	float Time;
+	float FrameTime;
 };
 
-struct MoveWork
-{
-	bool Complete = true;
-	Circle* MovingCircles;
-	uint32_t NumMovingCircles;
-};
