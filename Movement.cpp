@@ -1,19 +1,20 @@
 #include "Movement.h"
+#include "Globals.h"
 
 template<typename T>
-void Movement::Move(T obj, const int& numCircles, const float& speed, const float& range, const float& frameTime)
+void Movement::Move(T obj, const float& frameTime)
 {
-	/*auto objEnd = obj + numCircles;
+	/*auto objEnd = obj + NUM_CIRCLES;
 	while (obj != circlesEnd)
 	{
-		obj->Position += (speed * obj->Velocity) * frameTime;
+		obj->Position += (SPEED * obj->Velocity) * frameTime;
 
-		if (obj->Position.x < -range || obj->Position.x > range)
+		if (obj->Position.x < -RANGE_POSITION || obj->Position.x > RANGE_POSITION)
 		{
 			obj->Velocity.x = -obj->Velocity.x;
 		}
 
-		if (obj->Position.y < -range || obj->Position.y > range)
+		if (obj->Position.y < -RANGE_POSITION || obj->Position.y > RANGE_POSITION)
 		{
 			obj->Velocity.y = -obj->Velocity.y;
 		}
@@ -23,25 +24,25 @@ void Movement::Move(T obj, const int& numCircles, const float& speed, const floa
 }
 
 template<typename T>
-void Movement::Move(T obj, std::map<std::string, tle::IModel*>& modelsMap, const int& numCircles, const float& speed, const float& range, const float& frameTime)
+void Movement::Move(T obj, std::map<std::string, tle::IModel*>& modelsMap, const float& frameTime)
 {
 }
 
 
 template<> 
-void Movement::Move<Circle*>(Circle* obj, const int& numCircles, const float& speed, const float& range, const float& frameTime)
+void Movement::Move<Circle*>(Circle* obj, const float& frameTime)
 {
-	auto circlesEnd = obj + numCircles;
+	auto circlesEnd = obj + NUM_CIRCLES;
 	while (obj != circlesEnd)
 	{
-		obj->Position += (speed * obj->Velocity) * frameTime;
+		obj->Position += (SPEED * obj->Velocity) * frameTime;
 
-		if (obj->Position.x < -range || obj->Position.x > range)
+		if (obj->Position.x < -RANGE_POSITION || obj->Position.x > RANGE_POSITION)
 		{
 			obj->Velocity.x = -obj->Velocity.x;
 		}
 
-		if (obj->Position.y < -range || obj->Position.y > range)
+		if (obj->Position.y < -RANGE_POSITION || obj->Position.y > RANGE_POSITION)
 		{
 			obj->Velocity.y = -obj->Velocity.y;
 		}
@@ -51,19 +52,19 @@ void Movement::Move<Circle*>(Circle* obj, const int& numCircles, const float& sp
 }
 
 template<>
-void Movement::Move<Sphere*>(Sphere* obj, const int& numCircles, const float& speed, const float& range, const float& frameTime)
+void Movement::Move<Sphere*>(Sphere* obj, const float& frameTime)
 {
-	auto circlesEnd = obj + numCircles;
+	auto circlesEnd = obj + NUM_CIRCLES;
 	while (obj != circlesEnd)
 	{
-		obj->Position += (speed * obj->Velocity) * frameTime;
+		obj->Position += (SPEED * obj->Velocity) * frameTime;
 
-		if (obj->Position.x < -range || obj->Position.x > range)
+		if (obj->Position.x < -RANGE_POSITION || obj->Position.x > RANGE_POSITION)
 		{
 			obj->Velocity.x = -obj->Velocity.x;
 		}
 
-		if (obj->Position.y < -range || obj->Position.y > range)
+		if (obj->Position.y < -RANGE_POSITION || obj->Position.y > RANGE_POSITION)
 		{
 			obj->Velocity.y = -obj->Velocity.y;
 		}
@@ -74,20 +75,20 @@ void Movement::Move<Sphere*>(Sphere* obj, const int& numCircles, const float& sp
 
 
 template<>
-void Movement::Move<Circle*>(Circle* obj, std::map<std::string, tle::IModel*>& modelsMap, const int& numCircles, const float& speed, const float& range, const float& frameTime)
+void Movement::Move<Circle*>(Circle* obj, std::map<std::string, tle::IModel*>& modelsMap, const float& frameTime)
 {
-	auto circlesEnd = obj + numCircles;
+	auto circlesEnd = obj + NUM_CIRCLES;
 	while (obj != circlesEnd)
 	{
 		
-		obj->Position += (speed * obj->Velocity) * frameTime;
+		obj->Position += (SPEED * obj->Velocity) * frameTime;
 
-		if (obj->Position.x < -range || obj->Position.x > range)
+		if (obj->Position.x < -RANGE_POSITION || obj->Position.x > RANGE_POSITION)
 		{
 			obj->Velocity.x = -obj->Velocity.x;
 		}
 
-		if (obj->Position.y < -range || obj->Position.y > range)
+		if (obj->Position.y < -RANGE_POSITION || obj->Position.y > RANGE_POSITION)
 		{
 			obj->Velocity.y = -obj->Velocity.y;
 		}
@@ -103,19 +104,19 @@ void Movement::Move<Circle*>(Circle* obj, std::map<std::string, tle::IModel*>& m
 }
 
 template<>
-void Movement::Move<Sphere*>(Sphere* obj, std::map<std::string, tle::IModel*>& modelsMap, const int& numCircles, const float& speed, const float& range, const float& frameTime)
+void Movement::Move<Sphere*>(Sphere* obj, std::map<std::string, tle::IModel*>& modelsMap, const float& frameTime)
 {
-	auto circlesEnd = obj + numCircles;
+	auto circlesEnd = obj + NUM_CIRCLES;
 	while (obj != circlesEnd)
 	{
-		obj->Position += (speed * obj->Velocity) * frameTime;
+		obj->Position += (SPEED * obj->Velocity) * frameTime;
 
-		if (obj->Position.x < -range || obj->Position.x > range)
+		if (obj->Position.x < -RANGE_POSITION || obj->Position.x > RANGE_POSITION)
 		{
 			obj->Velocity.x = -obj->Velocity.x;
 		}
 
-		if (obj->Position.y < -range || obj->Position.y > range)
+		if (obj->Position.y < -RANGE_POSITION || obj->Position.y > RANGE_POSITION)
 		{
 			obj->Velocity.y = -obj->Velocity.y;
 		}
@@ -125,53 +126,3 @@ void Movement::Move<Sphere*>(Sphere* obj, std::map<std::string, tle::IModel*>& m
 		++obj;
 	}
 }
-
-//
-//void Movement::Move(Circle* circles, std::map<std::string, tle::IModel*>& modelsMap, const int& numCircles, const float& speed, const float& range, const float& frameTime)
-//{
-//	auto circlesEnd = circles + numCircles;
-//	while (circles != circlesEnd)
-//	{
-//		circles->Position += (speed * circles->Velocity) * frameTime;
-//
-//		if (circles->Position.x < -range || circles->Position.x > range)
-//		{
-//			circles->Velocity.x = -circles->Velocity.x;
-//		}
-//
-//		if (circles->Position.y < -range || circles->Position.y > range)
-//		{
-//			circles->Velocity.y = -circles->Velocity.y;
-//		}
-//
-//		modelsMap[circles->Name]->SetPosition(circles->Position.x, circles->Position.y, 0);
-//
-//		++circles;
-//	}
-//}
-//
-//void Movement::Move(Sphere* spheres, std::map<std::string, tle::IModel*>& modelsMap, const int& numSphere, const float& speed, const float& range, const float& frameTime)
-//{
-//	auto spheresEnd = spheres + numSphere;
-//	while (spheres != spheresEnd)
-//	{
-//		spheres->Position += (speed * spheres->Velocity) * frameTime;
-//
-//		if (spheres->Position.x < -range || spheres->Position.x > range)
-//		{
-//			spheres->Velocity.x = -spheres->Velocity.x;
-//		}
-//
-//		if (spheres->Position.y < -range || spheres->Position.y > range)
-//		{
-//			spheres->Velocity.y = -spheres->Velocity.y;
-//		}
-//
-//		modelsMap[spheres->Name]->SetPosition(spheres->Position.x, spheres->Position.y, 0);
-//
-//		++spheres;
-//	}
-//}
-//
-//
-//

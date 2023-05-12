@@ -11,10 +11,10 @@
 namespace Movement
 {
 	template<typename T>
-	void Move(T obj, const int& numCircles, const float& speed, const float& range, const float& frameTime);
+	void Move(T obj, const float& frameTime);
 
 	template<typename T>
-	void Move(T obj, std::map<std::string, tle::IModel*>& modelsMap, const int& numCircles, const float& speed, const float& range, const float& frameTime);
+	void Move(T obj, std::map<std::string, tle::IModel*>& modelsMap, const float& frameTime);
 }
 	
 

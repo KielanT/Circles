@@ -33,13 +33,6 @@ using namespace tle;
 #include "Globals.h"
 
 
-const uint32_t NUM_CIRCLES = 100;
-const float RANGE_POSITION = 1000.0f; // "Wall" around the circles
-const float RANGE_VELOCITY = 5.0f;
-const float RADIUS = 5.0f;
-const float MAX_RADIUS = 20.0f;
-
-const float SPEED = 100.0f;
 const float SCALE_FACTOR = 5.0f;
 
 const float CAM_SPEED = 500.0f;
@@ -62,7 +55,7 @@ void ControlCamera(I3DEngine* engine, ICamera* camera, float frameTime);
 
 void main()
 {
-	app.Init(RANGE_POSITION, RANGE_VELOCITY, RADIUS, MAX_RADIUS, NUM_CIRCLES);
+	app.Init();
 
 	Timer timer;
 	timer.Start();
@@ -74,7 +67,7 @@ void main()
 	{
 		float frameTime = timer.GetLapTime();
 		
-		Movement::Move(*app.Objects.data(), NUM_CIRCLES, SPEED, RANGE_POSITION, frameTime);
+		Movement::Move(*app.Objects.data(), frameTime);
 		
 		app.Loop(timer.GetTime(), frameTime);
 	}
@@ -121,7 +114,7 @@ void main()
 
 		myEngine->DrawScene();
 		
-		Movement::Move(*app.Objects.data(), gModelsMap, NUM_CIRCLES, SPEED, RANGE_POSITION, frameTime);
+		Movement::Move(*app.Objects.data(), gModelsMap, frameTime);
 		app.Loop(timer.GetTime(), frameTime);
 		
 

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <random>
 #include "OctreeApp.h"
+#include "Globals.h"
 
 
 OctreeApp::~OctreeApp()
@@ -8,17 +9,17 @@ OctreeApp::~OctreeApp()
 }
 
 
-void OctreeApp::Init(float rangePos, float velocity, float minRadius, float maxRadius ,int numCircles)
+void OctreeApp::Init()
 {
-	m_Octree = Octree::BuildOctree(CVector3(0.0f, 0.0f, 0.0f), rangePos, 5);
+	m_Octree = Octree::BuildOctree(CVector3(0.0f, 0.0f, 0.0f), RANGE_POSITION, 5);
 
 	std::random_device rd;
 	std::mt19937 mt(rd());
-	std::uniform_real_distribution<float> randLoc(-rangePos, rangePos);
-	std::uniform_real_distribution<float> randVel(-velocity, velocity);
-	std::uniform_real_distribution<float> randRad(minRadius, maxRadius);
+	std::uniform_real_distribution<float> randLoc(-RANGE_POSITION, RANGE_POSITION);
+	std::uniform_real_distribution<float> randVel(-RANGE_VELOCITY, RANGE_VELOCITY);
+	std::uniform_real_distribution<float> randRad(RADIUS, MAX_RADIUS);
 
-	for (uint32_t i = 0; i < numCircles / 2; ++i)
+	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
 		auto sphere = m_Pool.Get();
 		sphere->Position = { randLoc(mt), randLoc(mt), 0.0f };
@@ -31,7 +32,7 @@ void OctreeApp::Init(float rangePos, float velocity, float minRadius, float maxR
 		Objects.push_back(sphere);
 	}
 
-	for (uint32_t i = 0; i < numCircles / 2; ++i)
+	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
 		auto sphere = m_Pool.Get();
 		sphere->Position = { randLoc(mt), randLoc(mt), 0.0f };

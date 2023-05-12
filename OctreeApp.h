@@ -12,7 +12,7 @@ public:
 	~OctreeApp();
 
 
-	void Init(float rangePos, float velocity, float minRadius, float maxRadius, int numCircles);
+	void Init();
 
 	void Loop(float time, float frameTime);
 

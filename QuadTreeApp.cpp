@@ -15,9 +15,9 @@ QuadTreeApp::~QuadTreeApp()
 	}
 }
 
-void QuadTreeApp::Init(float rangePos, float velocity, float minRadius, float maxRadius, int numCircles)
+void QuadTreeApp::Init()
 {
-	m_QuadTree = new QuadTree::QuadTree(QuadTree::AABB(CVector2(0.0f, 0.0f), rangePos), 8);
+	m_QuadTree = new QuadTree::QuadTree(QuadTree::AABB(CVector2(0.0f, 0.0f), RANGE_POSITION), 8);
 
 	m_NumWorkers = std::thread::hardware_concurrency(); // Gets the amount of threads the system has (is only a hint may not work)
 	if (m_NumWorkers == 0) m_NumWorkers = 8; // If there wasn't any hints force threads count to be 8
@@ -29,15 +29,14 @@ void QuadTreeApp::Init(float rangePos, float velocity, float minRadius, float ma
 		m_CollisionWorkers[i].first.Thread = std::thread(&QuadTreeApp::CollisionThread, this, i);
 	}
 
-	m_NumCircles = numCircles;
 
 	std::random_device rd;
 	std::mt19937 mt(rd());
-	std::uniform_real_distribution<float> randLoc(-rangePos, rangePos);
-	std::uniform_real_distribution<float> randVel(-velocity, velocity);
-	std::uniform_real_distribution<float> randRad(minRadius, maxRadius);
+	std::uniform_real_distribution<float> randLoc(-RANGE_POSITION, RANGE_POSITION);
+	std::uniform_real_distribution<float> randVel(-RANGE_VELOCITY, RANGE_VELOCITY);
+	std::uniform_real_distribution<float> randRad(RADIUS, MAX_RADIUS);
 
-	for (uint32_t i = 0; i < numCircles / 2; ++i)
+	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
 		auto circle = m_Pool.Get();
 		circle->Position = { randLoc(mt), randLoc(mt) };
@@ -50,7 +49,7 @@ void QuadTreeApp::Init(float rangePos, float velocity, float minRadius, float ma
 		Objects.push_back(circle);
 	}
 
-	for (uint32_t i = 0; i < numCircles / 2; ++i)
+	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
 		auto circle = m_Pool.Get();
 		circle->Position = { randLoc(mt), randLoc(mt) };
@@ -90,7 +89,7 @@ void QuadTreeApp::RunCollisionThreads(float time, float frameTime)
 	{
 		auto& work = m_CollisionWorkers[i].second;
 		work.AllCircles = *AllCircles;
-		work.NumCircles = m_NumCircles / (m_NumWorkers + 1);
+		work.NumCircles = NUM_CIRCLES / (m_NumWorkers + 1);
 		work.Tree = m_QuadTree;
 		work.Time = time;
 		work.FrameTime = frameTime;
@@ -107,7 +106,7 @@ void QuadTreeApp::RunCollisionThreads(float time, float frameTime)
 	}
 
 	// Do collision for the remaining circles
-	uint32_t numRemainingCircles = m_NumCircles - static_cast<uint32_t>(AllCircles - Objects.data());
+	uint32_t numRemainingCircles = NUM_CIRCLES - static_cast<uint32_t>(AllCircles - Objects.data());
 	CollisionQuery(m_QuadTree, *AllCircles, numRemainingCircles, time, frameTime);
 
 
@@ -143,9 +142,9 @@ void QuadTreeApp::CollisionThread(uint32_t thread)
 	}
 }
 
-void QuadTreeApp::CollisionQuery(QuadTree::QuadTree* tree, Circle* allCircles, uint32_t numCircles, float time, float frameTime)
+void QuadTreeApp::CollisionQuery(QuadTree::QuadTree* tree, Circle* allCircles, uint32_t NUM_CIRCLES, float time, float frameTime)
 {
-	auto criclesEnd = allCircles + numCircles;
+	auto criclesEnd = allCircles + NUM_CIRCLES;
 	while (allCircles != criclesEnd)
 	{
 		QuadTree::AABB queryRange(allCircles->Position - CVector2(allCircles->Radius, allCircles->Radius), allCircles->Radius * 2.0f);
