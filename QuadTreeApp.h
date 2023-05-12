@@ -38,7 +38,7 @@ private:
 	static const uint32_t MAX_WORKERS = 31;
 	std::pair<WorkerThread, CollisionWork> m_CollisionWorkers[MAX_WORKERS];
 
-	uint32_t m_NumWorkers;
+	uint32_t m_NumWorkers = 0;
 
 
 

@@ -36,11 +36,17 @@ void QuadTreeApp::Init()
 	std::uniform_real_distribution<float> randVel(-RANGE_VELOCITY, RANGE_VELOCITY);
 	std::uniform_real_distribution<float> randRad(RADIUS, MAX_RADIUS);
 
+
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
 		auto circle = m_Pool.Get();
 		circle->Position = { randLoc(mt), randLoc(mt) };
+
+#ifdef RAND_RADIUS
 		circle->Radius = randRad(mt);
+#else 
+		circle->Radius = RADIUS;
+#endif		
 		circle->Velocity = { 0.0f, 0.0f };
 		circle->Name = "Block: " + std::to_string(i);
 		circle->Colour = { 1, 0, 0 };
@@ -53,7 +59,12 @@ void QuadTreeApp::Init()
 	{
 		auto circle = m_Pool.Get();
 		circle->Position = { randLoc(mt), randLoc(mt) };
+
+#ifdef RAND_RADIUS
 		circle->Radius = randRad(mt);
+#else 
+		circle->Radius = RADIUS;
+#endif	
 		circle->Velocity = { randVel(mt), randVel(mt) };
 		circle->Name = "Moving: " + std::to_string(i);
 		circle->Colour = { 0, 0, 1 };

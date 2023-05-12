@@ -1,11 +1,15 @@
 // Define used for switching between console and visualisation 
-//#define CONSOLE
-#define VISUAL 
-
-//#define OCTREE
-#define QUADTREE
 
 
+#include <iostream>
+#include <map>
+
+
+#include "Timer.h"
+#include "Entity.h"
+#include "Collision.h"
+#include "Movement.h"
+#include "Globals.h"
 
 
 #ifdef VISUAL
@@ -22,15 +26,6 @@ using namespace tle;
 #include "OctreeApp.h"
 #endif // OCTREE
 
-#include <iostream>
-#include <map>
-
-
-#include "Timer.h"
-#include "Entity.h"
-#include "Collision.h"
-#include "Movement.h"
-#include "Globals.h"
 
 
 const float SCALE_FACTOR = 5.0f;

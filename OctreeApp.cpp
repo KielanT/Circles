@@ -23,7 +23,11 @@ void OctreeApp::Init()
 	{
 		auto sphere = m_Pool.Get();
 		sphere->Position = { randLoc(mt), randLoc(mt), 0.0f };
+#ifdef RAND_RADIUS
 		sphere->Radius = randRad(mt);
+#else 
+		sphere->Radius = RADIUS;
+#endif	
 		sphere->Velocity = { 0.0f, 0.0f, 0.0f };
 		sphere->Name = "Block: " + std::to_string(i);
 		sphere->Colour = { 1, 0, 0 };
@@ -36,7 +40,11 @@ void OctreeApp::Init()
 	{
 		auto sphere = m_Pool.Get();
 		sphere->Position = { randLoc(mt), randLoc(mt), 0.0f };
+#ifdef RAND_RADIUS
 		sphere->Radius = randRad(mt);
+#else 
+		sphere->Radius = RADIUS;
+#endif	
 		sphere->Velocity = { randVel(mt), randVel(mt), 0.0f };
 		sphere->Name = "Moving: " + std::to_string(i);
 		sphere->Colour = { 0, 0, 1 };

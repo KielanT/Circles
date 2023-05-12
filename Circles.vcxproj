@@ -153,7 +153,6 @@ copy "D:\Software\Misc\TL-Engine\3rd Party\TL-Xtreme\shader\*.*" "$(OutDir)" &gt
     <ClInclude Include="PoolAllocator.h" />
     <ClInclude Include="QuadTree.h" />
     <ClInclude Include="QuadTreeApp.h" />
-    <ClInclude Include="Rectangle.h" />
     <ClInclude Include="ThreadHelper.h" />
     <ClInclude Include="Timer.h" />
   </ItemGroup>
