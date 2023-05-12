@@ -9,6 +9,9 @@
 
 QuadTreeApp::~QuadTreeApp()
 {
+	if (m_QuadTree != nullptr) delete m_QuadTree;
+
+	// Detach the threads
 	for (uint32_t i = 0; i < m_NumWorkers; ++i)
 	{
 		m_CollisionWorkers[i].first.Thread.detach();
@@ -17,6 +20,7 @@ QuadTreeApp::~QuadTreeApp()
 
 void QuadTreeApp::Init()
 {
+	// Create a new quad tree
 	m_QuadTree = new QuadTree::QuadTree(QuadTree::AABB(CVector2(0.0f, 0.0f), RANGE_POSITION), 8);
 
 	m_NumWorkers = std::thread::hardware_concurrency(); // Gets the amount of threads the system has (is only a hint may not work)
@@ -29,25 +33,28 @@ void QuadTreeApp::Init()
 		m_CollisionWorkers[i].first.Thread = std::thread(&QuadTreeApp::CollisionThread, this, i);
 	}
 
-
+	// Get random values
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<float> randLoc(-RANGE_POSITION, RANGE_POSITION);
 	std::uniform_real_distribution<float> randVel(-RANGE_VELOCITY, RANGE_VELOCITY);
 	std::uniform_real_distribution<float> randRad(RADIUS, MAX_RADIUS);
 
-
+	// Create the block circles (this to set the colour and name)
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
-		auto circle = m_Pool.Get();
+		auto circle = m_Pool.Get(); // Get/Construct circle from the pool
+
+		// Set up the circles values
 		circle->Position = { randLoc(mt), randLoc(mt) };
 
+		// Random radius on or off
 #ifdef RAND_RADIUS
 		circle->Radius = randRad(mt);
 #else 
 		circle->Radius = RADIUS;
 #endif		
-		circle->Velocity = { 0.0f, 0.0f };
+		circle->Velocity = { 0.0f, 0.0f }; // Velocity off for the blockers
 		circle->Name = "Block: " + std::to_string(i);
 		circle->Colour = { 1, 0, 0 };
 		circle->Bounds = QuadTree::AABB(circle->Position, circle->Radius * 2);
@@ -55,6 +62,7 @@ void QuadTreeApp::Init()
 		Objects.push_back(circle);
 	}
 
+	// Create the moving circles (this to set the colour and name)
 	for (uint32_t i = 0; i < NUM_CIRCLES / 2; ++i)
 	{
 		auto circle = m_Pool.Get();
@@ -65,7 +73,7 @@ void QuadTreeApp::Init()
 #else 
 		circle->Radius = RADIUS;
 #endif	
-		circle->Velocity = { randVel(mt), randVel(mt) };
+		circle->Velocity = { randVel(mt), randVel(mt) }; // Random Velocity
 		circle->Name = "Moving: " + std::to_string(i);
 		circle->Colour = { 0, 0, 1 };
 		circle->Bounds = QuadTree::AABB(circle->Position, circle->Radius * 2);
@@ -76,6 +84,7 @@ void QuadTreeApp::Init()
 
 void QuadTreeApp::Loop(float time, float frameTime)
 {
+	// Clear the tree then rebuild
 	m_QuadTree->Clear();
 	for (auto& obj : Objects)
 	{
@@ -83,6 +92,7 @@ void QuadTreeApp::Loop(float time, float frameTime)
 		m_QuadTree->Insert(obj);
 	}
 
+	// Run the quad tree on different threads
 	RunCollisionThreads(time, frameTime);
 
 	std::cout << "FrameTime: " << frameTime << std::endl;
@@ -95,6 +105,7 @@ void QuadTreeApp::Shutdown()
 
 void QuadTreeApp::RunCollisionThreads(float time, float frameTime)
 {
+	// Splits up the circles and sends them to the threads
 	auto AllCircles = Objects.data();
 	for (uint32_t i = 0; i < m_NumWorkers; ++i)
 	{
@@ -133,6 +144,7 @@ void QuadTreeApp::RunCollisionThreads(float time, float frameTime)
 
 void QuadTreeApp::CollisionThread(uint32_t thread)
 {
+	// Collision function
 	auto& worker = m_CollisionWorkers[thread].first;
 	auto& work = m_CollisionWorkers[thread].second;
 	
@@ -143,6 +155,7 @@ void QuadTreeApp::CollisionThread(uint32_t thread)
 			worker.WorkReady.wait(l, [&]() { return !work.Complete; });
 		}
 	
+		// RUn the collison query on thread
 		CollisionQuery(work.Tree, work.AllCircles, work.NumCircles, work.Time, work.FrameTime);
 	
 		{
@@ -155,6 +168,8 @@ void QuadTreeApp::CollisionThread(uint32_t thread)
 
 void QuadTreeApp::CollisionQuery(QuadTree::QuadTree* tree, Circle* allCircles, uint32_t NUM_CIRCLES, float time, float frameTime)
 {
+
+	// Loop through all the circles against the circles in range
 	auto criclesEnd = allCircles + NUM_CIRCLES;
 	while (allCircles != criclesEnd)
 	{
@@ -169,6 +184,7 @@ void QuadTreeApp::CollisionQuery(QuadTree::QuadTree* tree, Circle* allCircles, u
 
 				if (QuadTree::Intersects(allCircles->Bounds, otherCircle->Bounds))
 				{
+					// Circle to circle collision, this is what slows down the collision query
 					Collision::CircleToCirlce(allCircles, otherCircle, time, frameTime);
 				}
 			}

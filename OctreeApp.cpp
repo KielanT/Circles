@@ -11,8 +11,10 @@ OctreeApp::~OctreeApp()
 
 void OctreeApp::Init()
 {
+	// Build the quad tree
 	m_Octree = Octree::BuildOctree(CVector3(0.0f, 0.0f, 0.0f), RANGE_POSITION, 5);
 
+	// random values
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<float> randLoc(-RANGE_POSITION, RANGE_POSITION);
@@ -32,7 +34,7 @@ void OctreeApp::Init()
 		sphere->Name = "Block: " + std::to_string(i);
 		sphere->Colour = { 1, 0, 0 };
 
-		Octree::InsertObject(m_Octree, sphere);
+		Octree::InsertObject(m_Octree, sphere); // insert in to octree
 		Objects.push_back(sphere);
 	}
 
@@ -49,7 +51,7 @@ void OctreeApp::Init()
 		sphere->Name = "Moving: " + std::to_string(i);
 		sphere->Colour = { 0, 0, 1 };
 
-		Octree::InsertObject(m_Octree, sphere);
+		Octree::InsertObject(m_Octree, sphere); // insert in to octree
 		Objects.push_back(sphere);
 	}
 
@@ -59,8 +61,8 @@ void OctreeApp::Init()
 
 void OctreeApp::Loop(float time, float frameTime)
 {
+	// Test the collisions in the octree
 	Octree::TestCollisions(m_Octree, time, frameTime);
-	
 	
 
 	std::cout << "FrameTime: " << frameTime << std::endl;

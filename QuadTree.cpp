@@ -5,6 +5,7 @@ namespace QuadTree
 
 	QuadTree::~QuadTree()
 	{
+		// Delete the children
 		if (m_NorthWest != nullptr) delete m_NorthWest;
 		if (m_NorthEast != nullptr) delete m_NorthEast;
 		if (m_SouthWest != nullptr) delete m_SouthWest;
@@ -13,18 +14,22 @@ namespace QuadTree
 
 	bool QuadTree::Insert(Circle* circle)
 	{
-		
+		// Insert the circle
+
+		// If the circle is not in the main boundary then return
 		if (!Contains(Boundary, circle->Position))
 		{
 			return false;
 		}
 
+		// Make sure that the node isn't full then add to it
 		if (m_Circles.size() < m_NodeCapacity)
 		{
 			m_Circles.push_back(circle);
 			return true;
 		}
 
+		// If node capacity reach, subdivde and fill 
 		if (m_NorthWest == nullptr)
 		{
 			Subdivide();
@@ -40,6 +45,7 @@ namespace QuadTree
 
 	void QuadTree::Subdivide()
 	{
+		// Subdivde based on the bounday and half it
 		CVector2 centre = Boundary.Centre;
 		float halfDimension = Boundary.HalfDimension / 2.0f;
 
@@ -51,26 +57,32 @@ namespace QuadTree
 
 	std::vector<Circle*> QuadTree::QueryRange(AABB range)
 	{
+		// Vector of circles in range
 		std::vector<Circle*> CirclesInRange;
 
+		// If the range is not in boundary, return
 		if (!Intersects(Boundary, range))
 		{
 			return CirclesInRange;
 		}
 
+		// for all the circles on this quad 
+		// Add to the vector
 		for (auto& cir : m_Circles)
-		{
-			
+		{	
 			if (Contains(range, cir->Position))
 			{
 				CirclesInRange.push_back(cir);
 			}
 		}
 
+		// if the quad has no children return
 		if (m_NorthWest == nullptr)
 		{
 			return CirclesInRange;
 		}
+
+		// if has child add to the array
 
 		std::vector<Circle*> nwCircles = m_NorthWest->QueryRange(range);
 		CirclesInRange.insert(CirclesInRange.end(), nwCircles.begin(), nwCircles.end());
@@ -91,6 +103,7 @@ namespace QuadTree
 
 	void QuadTree::Clear()
 	{
+		// Clear all the circles in all the quads
 		m_Circles.clear();
 
 		if (m_NorthWest != nullptr)

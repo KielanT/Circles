@@ -1,5 +1,6 @@
 #include "Entity.h"
 
+// Helper function to check the point is in the Bounds
 bool QuadTree::Contains(AABB bound, CVector2 point)
 {
     return (point.x >= bound.Centre.x - bound.HalfDimension &&
@@ -8,6 +9,7 @@ bool QuadTree::Contains(AABB bound, CVector2 point)
         point.y <= bound.Centre.y + bound.HalfDimension);
 }
 
+// Check if the AABB boxes are intersect
 bool QuadTree::Intersects(AABB bound, AABB other)
 {
     return (abs(bound.Centre.x - other.Centre.x) < bound.HalfDimension + other.HalfDimension &&

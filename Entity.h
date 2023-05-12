@@ -4,9 +4,11 @@
 #include "CVector3.h"
 #include "CVector2.h"
 
+// AABB for the quad tree
 namespace QuadTree
 {
 
+    // AABB data that can be used for the quad tree
 struct AABB
 {
     CVector2 Centre;
@@ -18,12 +20,12 @@ struct AABB
 
 };
 
+// DOD helper funnctions for the quad tree
 bool Contains(AABB bound, CVector2 point);
-
 bool Intersects(AABB bound, AABB other);
 }
 
-
+// Struct for the circle data used by the quad tree
 struct Circle
 {
     CVector2 Position{ 0.0f, 0.0f };
@@ -37,6 +39,7 @@ struct Circle
     Circle() = default;
 };
 
+// Sphere data used by the octree
 struct Sphere
 {
     CVector3 Position{ 0.0f, 0.0f, 0.0f };
@@ -45,7 +48,7 @@ struct Sphere
     float Radius{ 1.0f };
     int HP{ 100 };
     std::string Name{ "" };
-    Sphere* NextCircle;
+    Sphere* NextCircle; // Basic linked list pointer
 
     Sphere() = default;
 };

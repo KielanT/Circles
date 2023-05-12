@@ -11,19 +11,25 @@ public:
 
 	~OctreeApp();
 
-
+	// Initiliser
 	void Init();
 
+	// Loop function
 	void Loop(float time, float frameTime);
 
+	// Shutdown
 	void Shutdown();
 
+	// Objects
 	std::vector<Sphere*> Objects;
 
 
 private:
+
+	// Quad tree
 	Octree::Node* m_Octree = nullptr;
 	
+	// Pool allocator
 	PoolAllocator<Sphere> m_Pool;
 };
 

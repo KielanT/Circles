@@ -12,14 +12,16 @@ struct WorkerThread
 	std::mutex Lock;
 };
 
+// Collision work to be sent to the other threads
 struct CollisionWork
 {
 	bool Complete = true;
-	Circle* AllCircles;
 	uint32_t NumCircles;
-	QuadTree::QuadTree* Tree;
 	float Time;
 	float FrameTime;
+	
+	QuadTree::QuadTree* Tree;
+	Circle* AllCircles;
 };
 
 

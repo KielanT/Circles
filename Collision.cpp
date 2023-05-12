@@ -29,6 +29,7 @@ void Collision::SpheresToSpheres(Circle* MovingCircles, Circle* BlockCircles, ui
 
 		// Unsure to why the commented outcode does not work
 
+		// Uses a seperate function for the inner loop
 		SphereToSpheres(*MovingCircles, BlockCircles, numBlockCircles, time, deltaTime);
 
 		++MovingCircles;
@@ -39,6 +40,7 @@ void Collision::SphereToSpheres(Circle& movingCirlce, Circle* BlockCircles, uint
 {
 	static std::mutex coutMutex;
 
+	// Functions for checking a single circle against all the other circles
 	auto BlockCirclesEnd = BlockCircles + numBlockCircles;
 	while (BlockCircles != BlockCirclesEnd)
 	{
@@ -80,6 +82,7 @@ void Collision::CircleToCirlce(Circle* circle, Circle* other, float time, float 
 
 	if (distance < circle->Radius + other->Radius)
 	{
+		// Reflect the velocity for both colliding objects
 		CVector2 normal = circle->Position - other->Position;
 		circle->Velocity = Reflect(circle->Velocity, Normalise(normal));
 		other->Velocity = Reflect(other->Velocity, Normalise(normal));
@@ -89,7 +92,7 @@ void Collision::CircleToCirlce(Circle* circle, Circle* other, float time, float 
 		other->HP -= 20;
 
 		
-	
+		// Stops the couts from getting jumbled with the other threads
 		std::unique_lock<std::mutex> lock(coutMutex);
 		{
 			std::cout << std::endl;
@@ -103,6 +106,7 @@ void Collision::CircleToCirlce(Circle* circle, Circle* other, float time, float 
 			std::cout << std::endl;
 		}
 
+		// Only destroys the circles if enabled
 #ifdef DESTROY
 		if (circle->HP <= 0)
 		{
@@ -138,6 +142,8 @@ void Collision::SphereToSphere(Sphere* circle, Sphere* other, float time, float 
 
 		circle->HP -= 20;
 		other->HP -= 20;
+
+		// Stops the couts from getting jumbled with the other threads
 		std::unique_lock<std::mutex> lock(coutMutex);
 		{
 			std::cout << std::endl;

@@ -27,15 +27,17 @@ using namespace tle;
 #endif // OCTREE
 
 
+// Scale factor used for making sure the radius are synces or at least close
+constexpr const float SCALE_FACTOR = 5.0f;
 
-const float SCALE_FACTOR = 5.0f;
-
-const float CAM_SPEED = 500.0f;
+// Used for controlling the camera speed
+constexpr const float CAM_SPEED = 500.0f;
 
 #ifdef VISUAL
 std::map<std::string, IModel*> gModelsMap;
 #endif 
 
+// Static polymorphism for switching between the quad tree and octree
 #ifdef QUADTREE
 QuadTreeApp app(NUM_CIRCLES);
 #endif // QUADTREE
@@ -50,8 +52,9 @@ void ControlCamera(I3DEngine* engine, ICamera* camera, float frameTime);
 
 void main()
 {
-	app.Init();
+	app.Init(); // App init function
 
+	// Timer
 	Timer timer;
 	timer.Start();
 
@@ -60,10 +63,12 @@ void main()
 
 	while (true)
 	{
-		float frameTime = timer.GetLapTime();
+		float frameTime = timer.GetLapTime(); // Frame time
 		
+		// Move objects 
 		Movement::Move(*app.Objects.data(), frameTime);
 		
+		// Run the loop
 		app.Loop(timer.GetTime(), frameTime);
 	}
 #endif
@@ -82,6 +87,7 @@ void main()
 
 	IMesh* SphereMesh = myEngine->LoadMesh("Sphere.x");
 
+	// Init the models
 	for (const auto& object : app.Objects)
 	{
 		IModel* Model = SphereMesh->CreateModel(object->Position.x, object->Position.y, 0);
@@ -119,14 +125,14 @@ void main()
 	// Delete the 3D engine now we are finished with it
 	myEngine->Delete();
 #endif
-	app.Shutdown();
+	app.Shutdown(); // Shutdown
 }
 
 
 #ifdef VISUAL
 void ControlCamera(I3DEngine* engine, ICamera* camera, float frameTime)
 {
-
+	// Control the camera
 
 	if (engine->KeyHeld(Key_W))
 	{
