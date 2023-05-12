@@ -28,6 +28,7 @@ void Movement::Move(T obj, const float& frameTime)
 template<typename T>
 void Movement::Move(T obj, std::map<std::string, tle::IModel*>& modelsMap, const float& frameTime)
 {
+
 }
 
 // Circle Move function

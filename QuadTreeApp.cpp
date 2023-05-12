@@ -85,11 +85,11 @@ void QuadTreeApp::Init()
 void QuadTreeApp::Loop(float time, float frameTime)
 {
 	// Clear the tree then rebuild
-	m_QuadTree->Clear();
+	Clear(m_QuadTree);
 	for (auto& obj : Objects)
 	{
 		obj->Bounds.Centre = obj->Position;
-		m_QuadTree->Insert(obj);
+		Insert(m_QuadTree, obj);
 	}
 
 	// Run the quad tree on different threads
@@ -175,7 +175,7 @@ void QuadTreeApp::CollisionQuery(QuadTree::QuadTree* tree, Circle* allCircles, u
 	{
 		QuadTree::AABB queryRange(allCircles->Position - CVector2(allCircles->Radius, allCircles->Radius), allCircles->Radius * 2.0f);
 
-		auto InRange = tree->QueryRange(queryRange);
+		auto InRange = QueryRange(tree, queryRange);
 
 		for (auto& otherCircle : InRange)
 		{
