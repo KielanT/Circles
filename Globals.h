@@ -15,8 +15,8 @@
 //    - turn on and of random radius
 //*****************************************
 
-//#define CONSOLE
-#define VISUAL 
+#define CONSOLE
+//#define VISUAL 
 
 //#define OCTREE
 #define QUADTREE

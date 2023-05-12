@@ -6,9 +6,8 @@
 namespace QuadTree
 {
 
-	class QuadTree
+	struct QuadTree
 	{
-	public:
 		// Set the quad tree boundary and the amount a node can store
 		QuadTree(AABB boundary, int nodeCapacity) : Boundary(boundary), m_NodeCapacity(nodeCapacity) {}
 		~QuadTree();

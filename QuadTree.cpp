@@ -13,53 +13,6 @@ namespace QuadTree
 	}
 
 
-	//void QuadTree::Subdivide()
-	//{
-	//	// Subdivde based on the bounday and half it
-	//	CVector2 centre = Boundary.Centre;
-	//	float halfDimension = Boundary.HalfDimension / 2.0f;
-
-	//	m_NorthWest = new QuadTree(AABB(centre - CVector2(halfDimension, halfDimension), halfDimension), m_NodeCapacity);
-	//	m_NorthEast = new QuadTree(AABB(centre + CVector2(halfDimension, -halfDimension), halfDimension), m_NodeCapacity);
-	//	m_SouthWest = new QuadTree(AABB(centre + CVector2(-halfDimension, halfDimension), halfDimension), m_NodeCapacity);
-	//	m_SouthEast = new QuadTree(AABB(centre + CVector2(halfDimension, halfDimension), halfDimension), m_NodeCapacity);
-	//}
-
-
-	//void QuadTree::Clear()
-	//{
-	//	// Clear all the circles in all the quads
-	//	m_Circles.clear();
-
-	//	if (m_NorthWest != nullptr)
-	//	{
-	//		m_NorthWest->Clear();
-	//		delete m_NorthWest;
-	//		m_NorthWest = nullptr;
-	//	}
-
-	//	if (m_NorthEast != nullptr)
-	//	{
-	//		m_NorthEast->Clear();
-	//		delete m_NorthEast;
-	//		m_NorthEast = nullptr;
-	//	}
-
-	//	if (m_SouthWest != nullptr)
-	//	{
-	//		m_SouthWest->Clear();
-	//		delete m_SouthWest;
-	//		m_SouthWest = nullptr;
-	//	}
-
-	//	if (m_SouthEast != nullptr)
-	//	{
-	//		m_SouthEast->Clear();
-	//		delete m_SouthEast;
-	//		m_SouthEast = nullptr;
-	//	}
-	//}
-
 	bool Insert(QuadTree* tree, Circle* circle)
 	{
 		// Insert the circle
