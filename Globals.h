@@ -2,6 +2,6 @@
 #include <map>
 #include <Model.h>
 
-#define DESTROY
+//#define DESTROY
 
 extern std::map<std::string, tle::IModel*> gModelsMap;
